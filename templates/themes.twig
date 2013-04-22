@@ -1,0 +1,15 @@
+{% extends '@default/layout.twig' %}
+
+{% block body %}
+    <h1>Themes</h1>
+    {% for theme, templates in themes %}
+        <h2>{{ theme }}</h2>
+        <ul>
+        {% for layout in templates %}
+            <li><a href="{{ path('get_theme_preview', {'theme': namespaces[theme], 'layout': layout}) }}">{{ layout }}</a></li>
+        {% else %}
+            <li>No templates found for this theme.</li>
+        {% endfor %}
+        </ul>
+    {% endfor %}
+{% endblock %}

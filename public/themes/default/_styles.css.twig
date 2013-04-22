@@ -1,0 +1,39 @@
+{# If you have made custom theme changes,
+   this block will be inserted into the theme layout
+   to overriding the theme defaults #}
+<style>
+
+    body {
+        background-color: {{ footer_bg_color }};
+        font-family: {{ body_font }};
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        color: {{ heading_font_color }};
+        font-family: {{ heading_font }};
+    }
+
+    #hd {
+        background-color: {{ header_bg_color }};
+        color: {{ header_font_color }};
+    }
+
+    #bd {
+        background-color: {{ body_bg_color }};
+    }
+
+    #ft {
+        background-color: {{ footer_bg_color }};
+        color: {{ footer_font_color }};
+    }
+
+    {# move these to another file? #}
+    #bd {
+        padding: 30px 0;
+    }
+
+    #ft {
+        padding-top: 20px;
+    }
+
+</style>

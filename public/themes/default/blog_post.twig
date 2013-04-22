@@ -1,0 +1,7 @@
+{% extends '@default/layout_sidebar.twig' %}
+
+{% region page_title %}{% endregion %}
+
+{% region main %}
+    {% include '@default/_post.twig' with {'post': post, 'standalone': true} %}
+{% endregion %}

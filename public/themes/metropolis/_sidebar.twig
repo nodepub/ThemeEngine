@@ -1,0 +1,18 @@
+{% extends "@global/_sidebar.twig" %}
+
+{% block tag_index_heading %}Tags{% endblock %}
+
+{% block twitter %}
+    <h3>Latest Tweets</h3>
+    <ul id="tweets">
+        <li class="loading">Loading&hellip;</li>
+    </ul>
+{% endblock %}
+
+{% block more %}
+    <section class="tumblr">
+        <h3><a href="http://ethergraphics.tumblr.com">Tumblr Posts</a></h3>
+        <div id="tumblr_posts"></div>
+        <p class="more_link"><a href="http://ethergraphics.tumblr.com">more on Tumblr&hellip;</a></p>
+    </section>
+{% endblock %}

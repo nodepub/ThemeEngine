@@ -1,0 +1,8 @@
+{% set page_title = 'Error ' ~ code %}
+{% extends '@metropolis/layout.twig' %}
+
+{% block main %}
+    <div class="grid_12 error_message">
+        <h1>Error {{ code }}: {{ message }}</h1>
+    </div>
+{% endblock %}

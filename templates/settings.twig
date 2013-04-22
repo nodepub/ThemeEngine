@@ -1,0 +1,10 @@
+{% extends '@default/layout.twig' %}
+
+{% block body %}
+    <h1>{{ theme_name }}</h1>
+    <p>TODO: this will be a form</p>
+    {% for key, value in settings %}
+        <h2>{{ key|replace({'_': ' '})|title }}</h2>
+        <p>{{ value }}</p>
+    {% endfor %}
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends '@default/layout.twig' %}
+
+{% block body %}
+    <div class="eleven columns alpha" role="main">
+        {% block page_title %}{{ parent() }}{% endblock %}
+        {% block main %}{% endblock %}
+    </div>
+    <div id="sidebar" class="four columns offset-by-one omega">
+        <aside class="sidebar">
+            {% block sidebar %}{% endblock %}
+        </aside>
+    </div>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% import "@default/_theme_settings.twig" as theme %}
+<!DOCTYPE html>
+<!--[if lt IE 7]> <html class="no-js ie6 oldie" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js ie7 oldie" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js ie8 oldie" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--><html lang="en"> <!--<![endif]-->
+<head>
+    <title>{% block title %}{{ node.title }} | {{ site.title }}{% endblock %}</title>
+
+    {{ theme.ascii }}
+
+    <!-- meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1">
+    <meta name="description" content="{{ node.meta_description|default(site.description) }}">
+
+    {# TODO: this needs to be dynamic #}
+    <!-- rss -->
+    {# <link rel="alternate" type="application/rss+xml" title="RSS" href="{{ path('rss') }}" /> #}
+    
+    <!-- css -->
+    {{ theme_styles() }}
+
+    <!-- javascript -->
+    <script src="/js/modernizr-2.0.6.min.js"></script>
+
+    <!--[if lt IE 9]>
+        <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- icons -->
+    {{ theme.icons }}
+</head>
+<body class="">
+    {#
+       Each layout section has a block for its container,
+       so that you can override or completely remove it from inherited themes
+    #}
+    {% block header_container %}
+        <header id="hd">
+            <div id="hd_inner" class="container">
+                {#
+                   'header' block can be overridden in inherited templates
+                   to change columns and/or content while keeping the containing div in place
+                #}
+                {% block header %}
+                    <div class="sixteen columns alpha">
+                        <h1><a href="/">{{ site.name|default('I like turtles') }}</a></h1>
+                        <h2>{{ site.tagline|default('Kittens are fluffy') }}</h2>
+                        <nav id="main_menu">
+                            {% block main_menu %}
+                            <ul>
+                                <li class="about"><a href="/">About</a></li>
+                                <li class="about"><a href="/">Blog</a></li>
+                                <li class="about"><a href="/">Contact</a></li>
+                            </ul>
+                            {% endblock %}
+                        </nav>
+                    </div>
+                {% endblock %}
+            </div>
+        </header>
+    {% endblock %}
+
+    {% block body_container %}
+        <div id="bd">
+            <div id="bd_inner" class="container">
+                {% block body %}
+                    <div id="main" class="sixteen columns alpha" role="main">
+                        {% block page_title %}{% endblock %}
+                        {# area "Main" #}
+                        {% block main %}{% endblock %}
+                    </div>
+                {% endblock %}
+            </div>
+        </div>
+    {% endblock %}
+
+    {% block footer_container %}
+        <footer id="ft">
+            <div id="ft_inner" class="container">
+                {% block footer %}
+                    <div class="sixteen columns alpha">
+                        <p>Powered by <a href="http://nodepub.com">NodePub</a>.</p>
+                    </div>
+                {% endblock %}
+            </div>
+        </footer>
+    {% endblock %}
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/{{ jquery_version|default('1.7.1') }}/jquery.min.js"></script>
+<script>window.jQuery || document.write('<script src="/js/jquery-{{ jquery_version|default('1.7.1') }}.min.js"><\/script>')</script>
+
+{{ theme.javascripts }}
+
+</body>
+</html>
