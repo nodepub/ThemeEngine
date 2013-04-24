@@ -10,7 +10,7 @@ use NodePub\ThemeEngine\Theme;
 class ThemeManager
 {
     protected $initialized;
-    protected $currentTheme;
+    protected $activeTheme;
     protected $activeThemes;
     protected $sourceDirs;
     protected $templateFileExtension;
@@ -64,12 +64,12 @@ class ThemeManager
     }
 
     /**
-     * Sets the theme name of the current theme
+     * Sets the theme name of the current active theme
      */
-    public function setCurrentTheme($themeName)
+    public function setActiveTheme($themeName)
     {
         if ($theme = $this->getTheme($themeName)) {
-            $this->currentTheme = $theme;
+            $this->activeTheme = $theme;
         } else {
             $warning = $this->initialized ? '' : ' ThemeManager not initialized yet.';
 
@@ -77,9 +77,9 @@ class ThemeManager
         }
     }
 
-    public function getCurrentTheme()
+    public function getActiveTheme()
     {
-        return $this->currentTheme;
+        return $this->activeTheme;
     }
     
     /**

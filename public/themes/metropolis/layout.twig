@@ -1,7 +1,7 @@
 {% extends '@default/layout.twig' %}
 
 {% block meta %}
-    <link rel="alternate" type="application/rss+xml" title="RSS" href="{{ site.url }}{{ path('rss') }}" />
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="{{ site.url }}{{ path('blog_rss') }}" />
 {% endblock %}
 
 {% block footer %}
@@ -11,7 +11,7 @@
     <div class="five columns offset-by-four omega">
         <ul id="social_media">
             <li class="twitter"><a href="http://twitter.com/gruner" class="replace">twitter</a></li>
-            <li class="rss"><a href="{{ site.url }}{{ path('rss') }}"  class="replace">rss</a></li>
+            <li class="rss"><a href="{{ site.url }}{{ path('blog_rss') }}"  class="replace">rss</a></li>
             <li class="contact"><a href="mailto:andrew.gruner@gmail.com?subject=Dude!" class="replace">contact</a></li>
             <li class="secret"><a href="http://bit.ly/net95" class="replace">secret</a></li>
         </ul>

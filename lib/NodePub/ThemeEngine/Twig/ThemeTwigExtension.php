@@ -1,13 +1,21 @@
 <?php
 
-namespace NodePub\ThemeEngine;
+namespace NodePub\ThemeEngine\Twig;
 
-class TwigExtension extends \Twig_Extension
+use NodePub\ThemeEngine\ThemeManager;
+
+class ThemeTwigExtension extends \Twig_Extension
 {
-    public $themeManager;
-    public $customCssTemplateName;
+    protected $themeManager;
+    protected $customCssTemplateName;
 
     protected $twigEnvironment;
+
+    public function __construct(ThemeManager $themeManager, $customCssTemplateName)
+    {
+        $this->themeManager = $themeManager;
+        $this->customCssTemplateName = $customCssTemplateName;
+    }
 
     public function getName()
     {
@@ -18,13 +26,6 @@ class TwigExtension extends \Twig_Extension
     {
         $this->twigEnvironment = $environment;
     }
-    
-    // public function getGlobals()
-    // {
-    //     return array(
-    //         'theme_path' => 'themes/default/';
-    //     );
-    // }
     
     public function getFunctions()
     {
@@ -37,7 +38,7 @@ class TwigExtension extends \Twig_Extension
     {
         return $this->twigEnvironment->render(
             '@default/_styles.css.twig',
-            $this->themeManager->getCurrentTheme()->getSettings()
+            $this->themeManager->getActiveTheme()->getSettings()
         );
     }
 
@@ -47,7 +48,7 @@ class TwigExtension extends \Twig_Extension
         $themePath = isset($globals['theme_path']) ? $globals['theme_path'] : '/';
 
         $stylesheetLinks = array();
-        $stylesheets = $this->themeManager->getCurrentTheme()->getStylesheets();
+        $stylesheets = $this->themeManager->getActiveTheme()->getStylesheets();
         foreach ($stylesheets as $stylesheet) {
             $stylesheetLinks[] = sprintf('<link rel="stylesheet" href="%scss/%s">', $themePath, $stylesheet);
         }
