@@ -9,11 +9,11 @@ use NodePub\ThemeEngine\Theme;
 
 class ThemeManager
 {
-    protected $initialized;
-    protected $activeTheme;
-    protected $activeThemes;
-    protected $sourceDirs;
-    protected $templateFileExtension;
+    protected $initialized,
+              $activeTheme,
+              $activeThemes,
+              $sourceDirs,
+              $templateFileExtension;
 
     /**
      * Caches raw theme config settings loaded from YAML files
@@ -66,10 +66,11 @@ class ThemeManager
     /**
      * Sets the theme name of the current active theme
      */
-    public function setActiveTheme($themeName)
+    public function activateTheme($themeName)
     {
         if ($theme = $this->getTheme($themeName)) {
             $this->activeTheme = $theme;
+            return $theme;
         } else {
             $warning = $this->initialized ? '' : ' ThemeManager not initialized yet.';
 
@@ -127,7 +128,7 @@ class ThemeManager
     
     /**
      * Loads a YAML config file
-     * @return array
+     * @return Theme
      */
     protected function loadTheme($file)
     {
@@ -139,6 +140,7 @@ class ThemeManager
             $themeConfig['path'] = $file->getPath();
 
             $theme = new Theme($themeConfig);
+
             return $theme;
         }
     }
@@ -204,7 +206,7 @@ class ThemeManager
      * Returns array of file names from a Finder instance
      * @return array
      */
-    protected function getFilenames($finder)
+    protected function getFilenames(Finder $finder)
     {
         $filenames = array();
         

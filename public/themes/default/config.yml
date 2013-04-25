@@ -13,6 +13,15 @@ stylesheets:
   - skeleton.css
   - layout.css
 
+javascripts:
+  - foo.js
+
+# each key suffix indicates its type
+# possible types are _color, _font, _image
+# should these be form types?
+# should there be a font stack provider?
+# maybe each theme could include font stacks? and we can collect them all?
+# how to integrate TypeKit?
 settings:
   body_bg_color: '#fff'
   body_font: '"HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif'
@@ -24,7 +33,3 @@ settings:
   header_font_color: '#fff'
   footer_bg_color: '#333'
   footer_font_color: '#fff'
-
-setting_types:
-  - font stack
-  - color

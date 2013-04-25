@@ -6,7 +6,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 
 class Theme
 {
-    protected $config;
+    protected $config,
+              $defaultSettings;
 
     function __construct(array $config)
     {
@@ -19,14 +20,15 @@ class Theme
         );
 
         $this->config = new ArrayCollection(array_merge($defaults, $config));
+        $this->defaultSettings = $config['settings'];
     }
 
-    function getName()
+    public function getName()
     {
         return $this->config->get('name');
     }
 
-    function getNamespace()
+    public function getNamespace()
     {
         $namespace = $this->config->get('namespace');
 
@@ -37,7 +39,7 @@ class Theme
         return $namespace;
     }
 
-    function getPath()
+    public function getPath()
     {
         return $this->config->get('path');
     }
@@ -45,7 +47,7 @@ class Theme
     /**
      * @TODO: 
      */
-    function versionIsOk()
+    public function versionIsOk()
     {
         return true;
     }
@@ -53,7 +55,7 @@ class Theme
     /**
      * @return array
      */
-    function getSettings()
+    public function getSettings()
     {
         $settings = $this->config->get('settings');
 
@@ -67,7 +69,7 @@ class Theme
     /**
      * @return array
      */
-    function getSettingsKeys()
+    public function getSettingsKeys()
     {
         return array_keys($this->getSettings());
     }
@@ -75,7 +77,7 @@ class Theme
     /**
      * @return array
      */
-    function getStylesheets()
+    public function getStylesheets()
     {
         $stylesheets = $this->config->get('stylesheets');
 
@@ -86,7 +88,7 @@ class Theme
         return $stylesheets;
     }
 
-    function customize($settings)
+    public function customize(array $settings)
     {
         $this->config->set('settings', array_merge($this->getSettings(), $settings));
     }

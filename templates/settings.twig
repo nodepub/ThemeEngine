@@ -7,4 +7,9 @@
         <h2>{{ key|replace({'_': ' '})|title }}</h2>
         <p>{{ value }}</p>
     {% endfor %}
+    <form action="{{ path('post_theme_settings') }}" method="post">
+        {{ form_widget(form) }}
+
+        <input type="submit" name="submit" />
+    </form>
 {% endblock %}

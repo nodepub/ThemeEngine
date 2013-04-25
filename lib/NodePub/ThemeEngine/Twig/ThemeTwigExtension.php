@@ -30,7 +30,7 @@ class ThemeTwigExtension extends \Twig_Extension
     public function getFunctions()
     {
         return array(
-            'theme_styles'   => new \Twig_Function_Method($this, 'themeStyles'),
+            'theme_styles' => new \Twig_Function_Method($this, 'themeStyles'),
         );
     }
 

@@ -2,11 +2,13 @@
 
 {% block body %}
     <h1>Themes</h1>
-    {% for theme, templates in themes %}
-        <h2>{{ theme }}</h2>
+    {% for theme in themes %}
+        <h2>{{ theme.name }}</h2>
+        <a href="{{ path('get_theme_settings', {'theme': theme.namespace}) }}">Settings</a>
+        <h3>Templates:</h3>
         <ul>
-        {% for layout in templates %}
-            <li><a href="{{ path('get_theme_preview', {'theme': namespaces[theme], 'layout': layout}) }}">{{ layout }}</a></li>
+        {% for layout in templates[theme.namespace] %}
+            <li><a href="{{ path('get_theme_preview', {'theme': theme.namespace, 'layout': layout}) }}">{{ layout }}</a></li>
         {% else %}
             <li>No templates found for this theme.</li>
         {% endfor %}

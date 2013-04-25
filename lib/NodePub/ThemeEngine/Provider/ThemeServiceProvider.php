@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use NodePub\ThemeEngine\ThemeManager;
 use NodePub\ThemeEngine\Controller\ThemeController;
 use NodePub\ThemeEngine\Twig\ThemeTwigExtension;
+use NodePub\ThemeEngine\Config\YamlConfigurationProvider;
 
 /**
  * Service Provider for Silex integration
@@ -25,8 +26,12 @@ class ThemeServiceProvider implements ServiceProviderInterface
             return array();
         });
 
+        $app['np.theme.configuration_provider'] = $app->share(function($app) {
+            return new YamlConfigurationProvider($app['np.theme.custom_settings_file']);
+        });
+
         $app['np.theme.custom_settings'] = $app->share(function($app) {
-            return array();
+            return $app['np.theme.configuration_provider']->get($app['np.theme.active']);
         });
 
         $app['np.theme.global_areas'] = $app->share(function($app) {
@@ -42,7 +47,11 @@ class ThemeServiceProvider implements ServiceProviderInterface
         });
 
         $app['np.theme.controller'] = $app->share(function($app) {
-            return new ThemeController($app['np.theme.manager'], $app['twig']);
+            return new ThemeController(
+                $app['np.theme.manager'],
+                $app['np.theme.configuration_provider'],
+                $app['form.factory'],
+                $app['twig']);
         });
     }
 
@@ -58,8 +67,9 @@ class ThemeServiceProvider implements ServiceProviderInterface
                 $app['twig.loader.filesystem']->addPath($theme->getPath(), $theme->getNamespace());
             }
 
-            $app['np.theme.manager']->setActiveTheme($app['np.theme.active']);
-            $app['np.theme.manager']->getActiveTheme()->customize($app['np.theme.custom_settings']);
+            $app['np.theme.manager']
+                ->activateTheme($app['np.theme.active'])
+                ->customize($app['np.theme.custom_settings']);
 
             $app['twig']->addExtension(new ThemeTwigExtension(
                 $app['np.theme.manager'],
@@ -68,8 +78,13 @@ class ThemeServiceProvider implements ServiceProviderInterface
 
             $app['twig']->addGlobal('theme_path', '/themes/'.$app['np.theme.active'].'/');
 
+            // @TODO This is ugly, full NodePub app will need a way to add admin modules
             $app['twig.loader.filesystem']->addPath(__DIR__.'/../../../../templates', 'theme_admin');
         });
+
+        # ===================================================== #
+        #    ROUTES                                             #
+        # ===================================================== #
 
         $themeControllers = $app['controllers_factory'];
 
