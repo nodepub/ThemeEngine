@@ -4,8 +4,12 @@ namespace NodePub\ThemeEngine;
 
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Yaml\Yaml;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use NodePub\ThemeEngine\Theme;
+use NodePub\ThemeEngine\ThemeEvents;
+use NodePub\ThemeEngine\Event\ThemeActivateEvent;
+
 
 class ThemeManager
 {
@@ -13,7 +17,8 @@ class ThemeManager
               $activeTheme,
               $activeThemes,
               $sourceDirs,
-              $templateFileExtension;
+              $templateFileExtension,
+              $eventDispatcher;
 
     /**
      * Caches raw theme config settings loaded from YAML files
@@ -21,12 +26,13 @@ class ThemeManager
      */
     protected $themes;
 
-    public function __construct($themePaths)
+    public function __construct($themePaths, EventDispatcherInterface $dispatcher)
     {
         $this->initialized = false;
         $this->sourceDirs = array();
         $this->activeThemes = new ArrayCollection();
         $this->templateFileExtension = 'twig';
+        $this->eventDispatcher = $dispatcher;
 
         if (is_array($themePaths)) {
             foreach ($themePaths as $dir) {
@@ -70,6 +76,9 @@ class ThemeManager
     {
         if ($theme = $this->getTheme($themeName)) {
             $this->activeTheme = $theme;
+            
+            $this->eventDispatcher->dispatch(ThemeEvents::THEME_ACTIVATE, new ThemeActivateEvent($theme));
+
             return $theme;
         } else {
             $warning = $this->initialized ? '' : ' ThemeManager not initialized yet.';
@@ -78,6 +87,9 @@ class ThemeManager
         }
     }
 
+    /**
+     * @return Theme
+     */
     public function getActiveTheme()
     {
         return $this->activeTheme;
@@ -223,5 +235,18 @@ class ThemeManager
     public function getTheme($themeName)
     {
         return $this->activeThemes->get($this->normalizeName($themeName));
+    }
+
+    /**
+     * All themes have to be loaded before we can set parent relationships
+     */
+    public function setThemeParents()
+    {
+        foreach ($this->activeThemes as $theme) {
+            if ($parentNamespace = $theme->config->get('parent_theme')) {
+                $parentTheme = $this->getTheme($parentNamespace);
+                $theme->setParent($parentTheme);
+            }
+        }
     }
 }

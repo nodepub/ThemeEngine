@@ -10,9 +10,9 @@ use NodePub\ThemeEngine\Config\ConfigurationProviderInterface;
  */
 class YamlConfigurationProvider implements ConfigurationProviderInterface
 {
-    protected $filePath;
-
-    protected $config;
+    protected $filePath,
+              $config,
+              $defaultConfig;
 
     /**
      * @param string $filePath
@@ -28,17 +28,20 @@ class YamlConfigurationProvider implements ConfigurationProviderInterface
             $this->load();
         }
 
-        if (isset($this->config[$themeName])) {
-            return $this->config[$themeName];
-        } else {
-            throw new \Exception(sprintf('No Configuration Found for Theme Named "%s"', $themeName));
-        }
+        return isset($this->config[$themeName]) ? $this->config[$themeName] : array();
     }
 
     public function update($themeName, array $themeSettings)
     {
         $this->config[$themeName] = $themeSettings;
-        $this->save();
+        
+        try {
+            $this->save();
+            return true;
+        } catch (\Exception $e) {
+            # TODO: log the error
+            return false;
+        }
     }
 
     /**
@@ -60,5 +63,10 @@ class YamlConfigurationProvider implements ConfigurationProviderInterface
     {
         $yaml = Yaml::dump($this->config, 2);
         file_put_contents($this->filePath, $yaml);
+    }
+
+    protected function getUniqueSettings()
+    {
+        array_diff($this->config, array2);
     }
 }

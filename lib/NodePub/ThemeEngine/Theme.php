@@ -2,12 +2,19 @@
 
 namespace NodePub\ThemeEngine;
 
-use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\HttpFoundation\ParameterBag;
 
 class Theme
 {
-    protected $config,
-              $defaultSettings;
+    /**
+     * @var ArrayCollection
+     */
+    protected $config;
+
+    /**
+     * @var Theme
+     */
+    protected $parent;
 
     function __construct(array $config)
     {
@@ -19,8 +26,11 @@ class Theme
             'stylesheets'  => array(),
         );
 
-        $this->config = new ArrayCollection(array_merge($defaults, $config));
-        $this->defaultSettings = $config['settings'];
+        $this->config = new ParameterBag(array_merge($defaults, $config));
+
+        // Cache the default settings so that if the theme is customized,
+        // we can access the original values
+        $this->config->set('defaultSettings', array_merge(array(), $this->config->get('settings')));
     }
 
     public function getName()
@@ -30,13 +40,28 @@ class Theme
 
     public function getNamespace()
     {
-        $namespace = $this->config->get('namespace');
+        return $this->config->get('namespace', basename($this->getPath()));
+    }
 
-        if (is_null($namespace)) {
-            $namespace = basename($this->getPath());
-        }
+    public function getParent()
+    {
+        return $this->parent;
+    }
 
-        return $namespace;
+    public function setParent(Theme $parent)
+    {
+          $this->parent = $parent;
+          return $this;
+    }
+
+    public function hasParent()
+    {
+        return $this->parent instanceof Theme;
+    }
+
+    public function getParentNamespace()
+    {
+          return $this->config->get('parent_theme');
     }
 
     public function getPath()
@@ -45,7 +70,7 @@ class Theme
     }
 
     /**
-     * @TODO: 
+     * @TODO: implement this check
      */
     public function versionIsOk()
     {
@@ -57,13 +82,12 @@ class Theme
      */
     public function getSettings()
     {
-        $settings = $this->config->get('settings');
+        return $this->config->get('settings', array());
+    }
 
-        if (is_null($settings)) {
-            $settings = array();
-        }
-
-        return $settings;
+    public function getDefaultSettings()
+    {
+        return $this->config->get('defaultSettings');
     }
 
     /**
@@ -79,17 +103,58 @@ class Theme
      */
     public function getStylesheets()
     {
-        $stylesheets = $this->config->get('stylesheets');
+        $stylesheets = $this->config->get('stylesheets', array());
+        $namespace = $this->getNamespace();
+        $stylesheets = array_map(function($stylesheet) use ($namespace) {
+            return $namespace . '/css/' . $stylesheet;
+        }, $stylesheets);
 
-        if (is_null($stylesheets)) {
-            $stylesheets = array();
+        // prepend parent's styles
+        if ($this->parent instanceof Theme) {
+            $stylesheets = array_merge($this->parent->getStylesheets(), $stylesheets);
         }
 
         return $stylesheets;
+
+        //return $this->getArrayMergedWithParent('stylesheets');
+    }
+
+    /**
+     * @return array
+     */
+    public function getArrayMergedWithParent($key)
+    {
+        $values = $this->config->get($key, array());
+
+        // prepend parent's values
+        if ($this->hasParent()) {
+            $values = array_merge($this->parent->getArrayMergedWithParent($key), $values);
+        }
+
+        return $values;
     }
 
     public function customize(array $settings)
     {
         $this->config->set('settings', array_merge($this->getSettings(), $settings));
+    }
+
+    /**
+     * Returns only the settings that differ from the default
+     * @return array
+     */
+    public function getCustomSettings($settings = array())
+    {
+        $settings = !empty($settings) ? $settings : $this->getSettings();
+        $defaultSettings = $this->getDefaultSettings();
+        $customSettings = array();
+
+        foreach ($settings as $key => $value) {
+            if (isset($defaultSettings[$key]) && $defaultSettings[$key] !== $value) {
+                $customSettings[$key] = $value;
+            }
+        }
+
+        return $customSettings;
     }
 }

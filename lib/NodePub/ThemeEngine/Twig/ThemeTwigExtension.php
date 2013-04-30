@@ -37,7 +37,7 @@ class ThemeTwigExtension extends \Twig_Extension
     public function getCustomizedCss()
     {
         return $this->twigEnvironment->render(
-            '@default/_styles.css.twig',
+            $this->customCssTemplateName,
             $this->themeManager->getActiveTheme()->getSettings()
         );
     }
@@ -45,12 +45,13 @@ class ThemeTwigExtension extends \Twig_Extension
     public function themeStyles($themeName = null)
     {
         $globals = $this->twigEnvironment->getGlobals();
-        $themePath = isset($globals['theme_path']) ? $globals['theme_path'] : '/';
+        
+        $themePath = isset($globals['themes_path']) ? $globals['themes_path'] : '/themes/';
 
         $stylesheetLinks = array();
         $stylesheets = $this->themeManager->getActiveTheme()->getStylesheets();
         foreach ($stylesheets as $stylesheet) {
-            $stylesheetLinks[] = sprintf('<link rel="stylesheet" href="%scss/%s">', $themePath, $stylesheet);
+            $stylesheetLinks[] = sprintf('<link rel="stylesheet" href="%s%s">', $themePath, $stylesheet);
         }
 
         return implode(PHP_EOL, $stylesheetLinks) . PHP_EOL . $this->getCustomizedCss() . PHP_EOL;

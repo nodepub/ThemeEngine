@@ -1,15 +1,10 @@
 {% extends '@default/layout.twig' %}
 
 {% block body %}
-    <h1>{{ theme_name }}</h1>
-    <p>TODO: this will be a form</p>
-    {% for key, value in settings %}
-        <h2>{{ key|replace({'_': ' '})|title }}</h2>
-        <p>{{ value }}</p>
-    {% endfor %}
-    <form action="{{ path('post_theme_settings') }}" method="post">
+    <h1>{{ active_theme.name }}</h1>
+    <form action="{{ path('post_theme_settings', {'theme': active_theme.namespace}) }}" method="post">
         {{ form_widget(form) }}
-
-        <input type="submit" name="submit" />
+        <a href="{{ path('get_themes') }}">Cancel</a>
+        <input type="submit" name="Save" />
     </form>
 {% endblock %}

@@ -2,6 +2,7 @@
 
 namespace NodePub\ThemeEngine\Controller;
 
+use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use NodePub\ThemeEngine\ThemeManager;
@@ -12,19 +13,16 @@ class ThemeController
 {
     protected $themeManager,
               $configurationProvider,
-              $twig,
-              $formFactory;
+              $app;
 
     public function __construct(
         ThemeManager $themeManager,
         ConfigurationProviderInterface $configurationProvider,
-        $formFactory,
-        $twigEnvironment)
+        Application $app)
     {
         $this->themeManager = $themeManager;
         $this->configurationProvider = $configurationProvider;
-        $this->formFactory = $formFactory;
-        $this->twig = $twigEnvironment;
+        $this->app = $app;
     }
 
     public function themesAction()
@@ -36,57 +34,72 @@ class ThemeController
             $templates[$theme->getNamespace()] = $this->themeManager->getThemeLayouts($theme->getNamespace());
         }
 
-        return $this->twig->render('@theme_admin/themes.twig', array(
+        return $this->app['twig']->render('@theme_admin/themes.twig', array(
             'themes' => $themes,
             'templates' => $templates
         ));
     }
 
-    public function settingsAction($theme)
+    public function settingsAction(Theme $theme)
     {
-        if (!$theme = $this->themeManager->getTheme($theme)) {
-            throw new \Exception("Theme not found", 404);
-        }
-
-        return $this->twig->render('@theme_admin/settings.twig', array(
-            'theme_name' => $theme->getName(),
-            'settings'   => $theme->getSettings(),
-            'form'       => $this->getForm($theme)->createView()
+        return $this->app['twig']->render('@theme_admin/settings.twig', array(
+            'active_theme' => $theme,
+            'form'  => $this->getForm($theme)->createView()
         ));
     }
 
-    public function postSettingsAction($theme)
+    public function postSettingsAction(Request $request, Theme $theme)
     {
-        if (!$theme = $this->themeManager->getTheme($theme)) {
-            throw new \Exception("Theme not found", 404);
-        }
-
         $form = $this->getForm($theme)->bind($request);
 
         if ($form->isValid()) {
-            $data = $form->getData();
 
-            $this->configurationProvider->update($theme->getNamespace(), $form->getData());
+            // only save the values that differ from the default
+            $customSettings = $theme->getCustomSettings($form->getData());
 
-            // redirect somewhere
-            // return $app->redirect('...');
+            if ($this->configurationProvider->update($theme->getNamespace(), $customSettings)) {
+                $this->app['session']->getFlashBag()->add('success', 'Theme Settings were saved.');
+                return $this->app->redirect($this->app['url_generator']->generate('get_themes'));
+            } else {
+                $this->app['session']->getFlashBag()->add('error', 'An error prevented Theme Settings from being saved. Check log for details.');
+                return $this->app->redirect(
+                    $this->app['url_generator']->generate(
+                        'get_theme_settings',
+                        array('theme' => $theme->getNamespace())
+                    )
+                );
+            }
+        } else {
+            $this->app['session']->getFlashBag()->add('error', 'The form contains errors, please see below.');
+            return $this->app['twig']->render('@theme_admin/settings.twig', array(
+                'active_theme' => $theme,
+                'form'  => $this->getForm($theme)->createView()
+            ));
         }
     }
 
-    public function previewAction($theme, $layout)
+    public function previewAction(Theme $theme, $layout)
     {
-        $this->twig->addGlobal('theme_path', '/themes/'.$theme.'/');
+        $this->app['twig']->addGlobal('theme_path', '/themes/'.$theme->getNamespace().'/');
 
-        $template = sprintf('@%s/%s', $theme, $layout);
+        $template = sprintf('@%s/%s', $theme->getNamespace(), $layout);
 
-        return $this->twig->render('@theme_admin/preview.twig', array(
+        return $this->app['twig']->render('@theme_admin/preview.twig', array(
             'preview_template' => $template
         ));
     }
 
+    public function postPreviewAction(Theme $theme)
+    {
+        $this->app['twig']->addGlobal('theme_path', '/themes/'.$theme->getNamespace().'/');
+        $this->app['session']->set('theme_preview', $theme->getNamespace());
+
+        return $this->app->redirect('/');
+    }
+
     protected function getForm(Theme $theme)
     {
-        $form = $this->formFactory->createBuilder('form', $theme->getSettings());
+        $form = $this->app['form.factory']->createBuilder('form', $theme->getSettings());
 
         foreach ($theme->getSettingsKeys() as $key) {
             $form->add($key);
