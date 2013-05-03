@@ -25,7 +25,7 @@ class ThemeController
         $this->app = $app;
     }
 
-    public function themesAction()
+    public function themesAction(Request $request)
     {
         $themes = $this->themeManager->loadThemes();
         $templates = array();
@@ -35,14 +35,19 @@ class ThemeController
         }
 
         return $this->app['twig']->render('@theme_admin/themes.twig', array(
+            'layout' => $this->app['np.admin.template'],
             'themes' => $themes,
-            'templates' => $templates
+            'templates' => $templates,
+            'referer' => urlencode($request->getPathInfo())
         ));
     }
 
     public function settingsAction(Theme $theme)
     {
+        $this->themeManager->activateTheme($theme);
+
         return $this->app['twig']->render('@theme_admin/settings.twig', array(
+            'layout' => $this->app['np.admin.template'],
             'active_theme' => $theme,
             'form'  => $this->getForm($theme)->createView()
         ));
@@ -72,29 +77,67 @@ class ThemeController
         } else {
             $this->app['session']->getFlashBag()->add('error', 'The form contains errors, please see below.');
             return $this->app['twig']->render('@theme_admin/settings.twig', array(
+                'layout' => $this->app['np.admin.template'],
                 'active_theme' => $theme,
                 'form'  => $this->getForm($theme)->createView()
             ));
         }
     }
 
-    public function previewAction(Theme $theme, $layout)
+    public function previewLayoutAction(Theme $theme, $layout)
     {
-        $this->app['twig']->addGlobal('theme_path', '/themes/'.$theme->getNamespace().'/');
-
         $template = sprintf('@%s/%s', $theme->getNamespace(), $layout);
 
         return $this->app['twig']->render('@theme_admin/preview.twig', array(
-            'preview_template' => $template
+            'layout' => $template
         ));
     }
 
-    public function postPreviewAction(Theme $theme)
+    public function switchThemeAction(Request $request, $referer)
     {
-        $this->app['twig']->addGlobal('theme_path', '/themes/'.$theme->getNamespace().'/');
-        $this->app['session']->set('theme_preview', $theme->getNamespace());
+        $defaultFormData = array(
+            'referer' => $referer
+        );
 
-        return $this->app->redirect('/');
+        if ($previouslySelectedTheme = $this->app['session']->get('theme_preview')) {
+            $defaultFormData['theme'] = $previouslySelectedTheme;
+        }
+
+        $form = $this->app['form.factory']->createBuilder('form', $defaultFormData)
+            ->add('referer', 'hidden')
+            ->add('theme', 'choice', array(
+                'choices' => $this->themeManager->getActiveThemeNames(),
+                'expanded' => false,
+                'label' => 'Theme Preview'
+            ))
+            ->getForm();
+
+        if ('POST' === $request->getMethod()) {
+            $form->bind($request);
+
+            if ($form->isValid()) {
+                $data = $form->getData();
+
+                if (isset($data['cancel'])) {
+                    $this->app['session']->remove('theme_preview');
+                } else {
+                    // Save selected theme to session
+                    $theme = $this->themeManager->getTheme($data['theme']);
+                    $this->app['session']->set('theme_preview', $theme->getNamespace());
+                }
+
+                return $this->app->redirect(urldecode($data['referer']));
+            }
+        }
+
+        // display the form
+        return $this->app['twig']->render('@theme_admin/_theme_switcher.twig', array('form' => $form->createView()));
+    }
+
+    public function resetThemeAction(Request $request, $referer)
+    {
+        $this->app['session']->remove('theme_preview');
+        return $this->app->redirect(urldecode($referer));
     }
 
     protected function getForm(Theme $theme)

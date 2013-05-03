@@ -10,6 +10,11 @@ use NodePub\ThemeEngine\Controller\ThemeController;
 use NodePub\ThemeEngine\Twig\ThemeTwigExtension;
 use NodePub\ThemeEngine\Config\YamlConfigurationProvider;
 
+
+use Symfony\Component\HttpKernel\HttpKernelInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+
 /**
  * Service Provider for Silex integration
  */
@@ -69,14 +74,6 @@ class ThemeServiceProvider implements ServiceProviderInterface
 
             $app['np.theme.manager']->activateTheme($app['np.theme.active']);
 
-            // set active theme's parent
-            $theme = $app['np.theme.manager']->getActiveTheme();
-            if ($parentName = $theme->getParentNamespace()) {
-                if ($parent = $app['np.theme.manager']->getTheme($parentName)) {
-                    $theme->setParent($parent);
-                }
-            }
-
             if (!empty($app['np.theme.custom_settings'])) {
                 $app['np.theme.manager']->getActiveTheme()->customize($app['np.theme.custom_settings']);
             }
@@ -93,8 +90,30 @@ class ThemeServiceProvider implements ServiceProviderInterface
                 return $twig;
             }));
 
-            // @TODO This is ugly, full NodePub app will need a way to add admin modules
-            $app['twig.loader.filesystem']->addPath(__DIR__.'/../../../../templates', 'theme_admin');
+            $app['twig.loader.filesystem']->addPath(__DIR__.'/../Resources/views', 'theme_admin');
+        });
+
+        $app->after(function(Request $request, Response $response) use ($app) {
+
+            if ($theme = $app['session']->get('theme_preview')) {
+
+                $html = $response->getContent();
+
+                $subRequest = Request::create($app['url_generator']->generate('theme_switcher', array('referer' => urlencode($request->getPathInfo()))));
+                $response = $app->handle($subRequest, HttpKernelInterface::SUB_REQUEST, false);
+
+                $themeSwitcher = $response->getContent();
+
+                if (preg_match("~^([ \t]?)</body~mi", $html, $matches)) {
+                    // Try to insert it just before </body>
+                    $replacement = sprintf("%s\t%s\n%s", $matches[1], $themeSwitcher, $matches[0]);
+                    $html = str_replace($matches[0], $replacement, $html);
+                }
+
+                $response->setContent($html);
+            }
+
+            return $response;
         });
 
         # ===================================================== #
@@ -122,13 +141,13 @@ class ThemeServiceProvider implements ServiceProviderInterface
             ->convert('theme', $themeProvider)
             ->bind('post_theme_settings');
 
-        $themeControllers->get('/{theme}/preview/{layout}', 'np.theme.controller:previewAction')
+        $themeControllers->get('/{theme}/preview/{layout}', 'np.theme.controller:previewLayoutAction')
             ->convert('theme', $themeProvider)
             ->bind('get_theme_preview');
 
-        $themeControllers->post('/{theme}/preview', 'np.theme.controller:postPreviewAction')
-            ->convert('theme', $themeProvider)
-            ->bind('post_theme_preview');
+        $themeControllers->match('/switcher/referer/{referer}', 'np.theme.controller:switchThemeAction')
+            ->value('referer', '')
+            ->bind('theme_switcher');
 
         $app->mount($app['np.theme.mount_point'], $themeControllers);
     }

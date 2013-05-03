@@ -72,11 +72,14 @@ class ThemeManager
     /**
      * Sets the theme name of the current active theme
      */
-    public function activateTheme($themeName)
+    public function activateTheme($theme)
     {
-        if ($theme = $this->getTheme($themeName)) {
+        if (is_string($theme)) {
+            $theme = $this->getTheme($theme);
+        }
+
+        if ($theme) {
             $this->activeTheme = $theme;
-            
             $this->eventDispatcher->dispatch(ThemeEvents::THEME_ACTIVATE, new ThemeActivateEvent($theme));
 
             return $theme;
@@ -248,5 +251,17 @@ class ThemeManager
                 $theme->setParent($parentTheme);
             }
         }
+    }
+
+    public function getActiveThemeNames()
+    {
+        $themes = $this->loadThemes();
+        $themeNames = array();
+
+        foreach ($themes as $theme) {
+            $themeNames[$theme->getNamespace()] = $theme->getName();
+        }
+
+        return $themeNames;
     }
 }

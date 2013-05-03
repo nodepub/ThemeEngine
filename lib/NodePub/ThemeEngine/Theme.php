@@ -7,7 +7,7 @@ use Symfony\Component\HttpFoundation\ParameterBag;
 class Theme
 {
     /**
-     * @var ArrayCollection
+     * @var ParameterBag
      */
     protected $config;
 
@@ -18,15 +18,7 @@ class Theme
 
     function __construct(array $config)
     {
-        // Make sure we always have these values
-        $defaults = array(
-            'name'      => '',
-            'path'      => '',
-            'settings'  => array(),
-            'stylesheets'  => array(),
-        );
-
-        $this->config = new ParameterBag(array_merge($defaults, $config));
+        $this->config = new ParameterBag($config);
 
         // Cache the default settings so that if the theme is customized,
         // we can access the original values
@@ -85,6 +77,9 @@ class Theme
         return $this->config->get('settings', array());
     }
 
+    /**
+     * @return array
+     */
     public function getDefaultSettings()
     {
         return $this->config->get('defaultSettings');
@@ -103,37 +98,72 @@ class Theme
      */
     public function getStylesheets()
     {
-        $stylesheets = $this->config->get('stylesheets', array());
-        $namespace = $this->getNamespace();
-        $stylesheets = array_map(function($stylesheet) use ($namespace) {
-            return $namespace . '/css/' . $stylesheet;
-        }, $stylesheets);
+        return $this->config->get('stylesheets', array());
+    }
+
+    /**
+     * Returns an array of the Theme's stylesheets,
+     * merged with any Parent Theme's stylesheets.
+     * Expands the paths of each.
+     * @return array
+     */
+    public function getStylesheetPaths()
+    {
+        $stylesheets = array_map(array($this, 'getAssetPath'), $this->getStylesheets());
 
         // prepend parent's styles
-        if ($this->parent instanceof Theme) {
-            $stylesheets = array_merge($this->parent->getStylesheets(), $stylesheets);
+        if ($this->hasParent()) {
+            $stylesheets = array_merge($this->parent->getStylesheetPaths(), $stylesheets);
         }
 
         return $stylesheets;
-
-        //return $this->getArrayMergedWithParent('stylesheets');
     }
 
     /**
      * @return array
      */
-    public function getArrayMergedWithParent($key)
+    public function getJavaScripts()
     {
-        $values = $this->config->get($key, array());
-
-        // prepend parent's values
-        if ($this->hasParent()) {
-            $values = array_merge($this->parent->getArrayMergedWithParent($key), $values);
-        }
-
-        return $values;
+        return $this->config->get('javascripts', array());
     }
 
+    /**
+     * Returns an array of the Theme's javascripts,
+     * merged with any Parent Theme's javascripts.
+     * Expands the paths of each.
+     * @return array
+     */
+    public function getJavaScriptPaths()
+    {
+        $scripts = array_map(array($this, 'getAssetPath'), $this->getJavaScripts());
+
+        // prepend parent's scripts
+        if ($this->hasParent()) {
+            $scripts = array_merge($this->parent->getJavaScriptPaths(), $scripts);
+        }
+
+        return $scripts;
+    }
+
+    /**
+     * Builds the relative path of an asset
+     * If the asset is already a full or root-relative path,
+     * it is not altered.
+     */
+    protected function getAssetPath($asset)
+    {
+        if (preg_match('/^https?:|\//', $asset)) {
+            return $asset;
+        } else {
+            $ext = pathinfo($asset, PATHINFO_EXTENSION);
+            return sprintf('%s/%s/%s', $this->getNamespace(), $ext, $asset);
+        }
+    }
+
+    /**
+     * Merges an array of custom settings with this theme's settings
+     * @return null
+     */
     public function customize(array $settings)
     {
         $this->config->set('settings', array_merge($this->getSettings(), $settings));

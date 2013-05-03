@@ -1,4 +1,4 @@
-{% extends '@default/layout.twig' %}
+{% extends layout %}
 
 {% block body %}
     {% if standalone %}
@@ -26,6 +26,8 @@
             </div>
         {% endfor %}
     {% endif %}
+
+    {{ render(path('theme_switcher', {'referer': app.request.pathInfo|url_encode})) }}
 
     <h1>Themes</h1>
     {% for theme in themes %}
