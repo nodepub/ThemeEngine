@@ -116,6 +116,11 @@ class ThemeServiceProvider implements ServiceProviderInterface
             return $response;
         });
 
+        // todo add a finish event to generate asset caches
+        $app->finish(function(Request $request, Response $response) {
+            
+        });
+
         # ===================================================== #
         #    ROUTES                                             #
         # ===================================================== #
@@ -150,5 +155,14 @@ class ThemeServiceProvider implements ServiceProviderInterface
             ->bind('theme_switcher');
 
         $app->mount($app['np.theme.mount_point'], $themeControllers);
+
+        // minified asset urls
+        $app->get('/themes/{theme}/css/styles.min.css', 'np.theme.controller:minifyStylesheetsAction')
+            ->convert('theme', $themeProvider)
+            ->bind('get_minified_stylesheets');
+
+        $app->get('/themes/{theme}/js/javascripts.min.css', 'np.theme.controller:minifyJavascriptsAction')
+            ->convert('theme', $themeProvider)
+            ->bind('get_minified_javascripts');
     }
 }

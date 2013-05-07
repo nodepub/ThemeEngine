@@ -8,6 +8,9 @@ use Symfony\Component\HttpFoundation\Response;
 use NodePub\ThemeEngine\ThemeManager;
 use NodePub\ThemeEngine\Theme;
 use NodePub\ThemeEngine\Config\ConfigurationProviderInterface;
+use NodePub\ThemeEngine\Form\Type\ThemeSettingsType;
+
+
 
 class ThemeController
 {
@@ -49,13 +52,13 @@ class ThemeController
         return $this->app['twig']->render('@theme_admin/settings.twig', array(
             'layout' => $this->app['np.admin.template'],
             'active_theme' => $theme,
-            'form'  => $this->getForm($theme)->createView()
+            'form'  => $this->getSettingsForm($theme)->createView()
         ));
     }
 
     public function postSettingsAction(Request $request, Theme $theme)
     {
-        $form = $this->getForm($theme)->bind($request);
+        $form = $this->getSettingsForm($theme)->bind($request);
 
         if ($form->isValid()) {
 
@@ -108,7 +111,8 @@ class ThemeController
             ->add('theme', 'choice', array(
                 'choices' => $this->themeManager->getActiveThemeNames(),
                 'expanded' => false,
-                'label' => 'Theme Preview'
+                'label' => 'Theme Preview',
+                'attr' => array('class' => '-themeSwitchSelect')
             ))
             ->getForm();
 
@@ -140,14 +144,28 @@ class ThemeController
         return $this->app->redirect(urldecode($referer));
     }
 
-    protected function getForm(Theme $theme)
+    public function minifyStylesheetsAction(Theme $theme)
     {
-        $form = $this->app['form.factory']->createBuilder('form', $theme->getSettings());
+        $stylesheets = $this->themeManager->getActiveTheme()->getStylesheetPaths();
 
-        foreach ($theme->getSettingsKeys() as $key) {
-            $form->add($key);
+        $am = new AssetManager();
+        foreach ($stylesheets as $stylesheet) {
+            // todo skip absolute urls
+            $am->set('css', new FileAsset($this->themeManager->getThemesPath().$stylesheet));
         }
 
-        return $form->getForm();
+        $fm = new FilterManager();
+        $fm->set('sass', new SassFilter('/path/to/parser/sass'));
+        $fm->set('yui_css', new Yui\CssCompressorFilter('/path/to/yuicompressor.jar'));
+
+        $writer = new AssetWriter('/path/to/web');
+        $writer->writeManagerAssets($am);
+    }
+
+    protected function getSettingsForm(Theme $theme)
+    {
+        return $this->app['form.factory']->create(
+            new ThemeSettingsType($theme, $this->app['np.theme.fontstack_provider'])
+        );
     }
 }

@@ -30,25 +30,25 @@ class ThemeTwigExtension extends \Twig_Extension
     public function getFunctions()
     {
         return array(
-            'theme_styles' => new \Twig_Function_Method($this, 'themeStyles'),
+            'theme_styles'      => new \Twig_Function_Method($this, 'themeStyles'),
             'theme_javascripts' => new \Twig_Function_Method($this, 'themeJavaScripts'),
-        );
-    }
-
-    public function getCustomizedCss()
-    {
-        return $this->twigEnvironment->render(
-            $this->customCssTemplateName,
-            $this->themeManager->getActiveTheme()->getSettings()
+            'body_class'        => new \Twig_Function_Method($this, 'bodyClass'),
         );
     }
 
     public function themeStyles($themeName = null)
     {
+        $globals = $this->twigEnvironment->getGlobals();
+        $linkTag = '<link rel="stylesheet" href="%s%s">';
+        $stylesheets = $$this->themeManager->getActiveTheme()->getStylesheetPaths();
         $stylesheetLinks = array();
-        $stylesheets = $this->themeManager->getActiveTheme()->getStylesheetPaths();
-        foreach ($stylesheets as $stylesheet) {
-            $stylesheetLinks[] = sprintf('<link rel="stylesheet" href="%s%s">', $this->getThemesPath(), $stylesheet);
+
+        if (isset($globals['app']['debug'])) {
+            foreach ($stylesheets as $stylesheet) {
+                $stylesheetLinks[] = sprintf($linkTag, $this->getThemesPath(), $stylesheet);
+            }
+        } else {
+            $stylesheetLinks[] = sprintf($linkTag, $this->getThemesPath(), '/css/styles.min.css');
         }
 
         return implode(PHP_EOL, $stylesheetLinks) . PHP_EOL . $this->getCustomizedCss() . PHP_EOL;
@@ -63,6 +63,35 @@ class ThemeTwigExtension extends \Twig_Extension
         }
 
         return implode(PHP_EOL, $scriptLinks);
+    }
+
+    public function bodyClass()
+    {
+        $globals = $this->twigEnvironment->getGlobals();
+        $classes = array();
+
+        if (isset($globals['section'])) {
+            $classes[]= 'section_' . $globals['section'];
+        }
+
+        if (isset($globals['page_title'])) {
+            $classes[]= $this->slugify($globals['page_title']);
+        }
+
+        return implode(' ', $classes);
+    }
+
+    public function slugify($string)
+    {
+        return str_replace(' ', '-', strtolower($string));
+    }
+
+    protected function getCustomizedCss()
+    {
+        return $this->twigEnvironment->render(
+            $this->customCssTemplateName,
+            $this->themeManager->getActiveTheme()->getSettings()
+        );
     }
 
     /**
