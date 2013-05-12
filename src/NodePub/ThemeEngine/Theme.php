@@ -3,6 +3,7 @@
 namespace NodePub\ThemeEngine;
 
 use Symfony\Component\HttpFoundation\ParameterBag;
+use NodePub\ThemeEngine\Model\Asset;
 
 class Theme
 {
@@ -12,6 +13,11 @@ class Theme
     protected $config;
 
     /**
+     * @var ParameterBag
+     */
+    protected $assets;
+
+    /**
      * @var Theme
      */
     protected $parent;
@@ -19,9 +25,10 @@ class Theme
     function __construct(array $config)
     {
         $this->config = new ParameterBag($config);
+        $this->assets = new ParameterBag();
 
         // Cache the default settings so that if the theme is customized,
-        // we can access the original values
+        // we still have the original values
         $this->config->set('defaultSettings', array_merge(array(), $this->config->get('settings')));
     }
 
@@ -32,7 +39,7 @@ class Theme
 
     public function getNamespace()
     {
-        return $this->config->get('namespace', basename($this->getPath()));
+        return $this->config->get('namespace', basename($this->getDir()));
     }
 
     public function getParent()
@@ -56,9 +63,12 @@ class Theme
           return $this->config->get('parent_theme');
     }
 
-    public function getPath()
+    /**
+     * Returns the filesystem path of the theme directory
+     */
+    public function getDir()
     {
-        return $this->config->get('path');
+        return $this->config->get('dir');
     }
 
     /**
@@ -68,6 +78,10 @@ class Theme
     {
         return true;
     }
+
+    # ===================================================== #
+    #    SETTINGS                                           #
+    # ===================================================== #
 
     /**
      * @return array
@@ -91,73 +105,6 @@ class Theme
     public function getSettingsKeys()
     {
         return array_keys($this->getSettings());
-    }
-
-    /**
-     * @return array
-     */
-    public function getStylesheets()
-    {
-        return $this->config->get('stylesheets', array());
-    }
-
-    /**
-     * Returns an array of the Theme's stylesheets,
-     * merged with any Parent Theme's stylesheets.
-     * Expands the paths of each.
-     * @return array
-     */
-    public function getStylesheetPaths()
-    {
-        $stylesheets = array_map(array($this, 'getAssetPath'), $this->getStylesheets());
-
-        // prepend parent's styles
-        if ($this->hasParent()) {
-            $stylesheets = array_merge($this->parent->getStylesheetPaths(), $stylesheets);
-        }
-
-        return $stylesheets;
-    }
-
-    /**
-     * @return array
-     */
-    public function getJavaScripts()
-    {
-        return $this->config->get('javascripts', array());
-    }
-
-    /**
-     * Returns an array of the Theme's javascripts,
-     * merged with any Parent Theme's javascripts.
-     * Expands the paths of each.
-     * @return array
-     */
-    public function getJavaScriptPaths()
-    {
-        $scripts = array_map(array($this, 'getAssetPath'), $this->getJavaScripts());
-
-        // prepend parent's scripts
-        if ($this->hasParent()) {
-            $scripts = array_merge($this->parent->getJavaScriptPaths(), $scripts);
-        }
-
-        return $scripts;
-    }
-
-    /**
-     * Builds the relative path of an asset
-     * If the asset is already a full or root-relative path,
-     * it is not altered.
-     */
-    protected function getAssetPath($asset)
-    {
-        if (preg_match('/^https?:|\//', $asset)) {
-            return $asset;
-        } else {
-            $ext = pathinfo($asset, PATHINFO_EXTENSION);
-            return sprintf('%s/%s/%s', $this->getNamespace(), $ext, $asset);
-        }
     }
 
     /**
@@ -186,5 +133,145 @@ class Theme
         }
 
         return $customSettings;
+    }
+
+    # ===================================================== #
+    #    STYLESHEETS                                        #
+    # ===================================================== #
+
+    /**
+     * @return array
+     */
+    public function getStylesheets()
+    {
+        return $this->config->get('stylesheets', array());
+    }
+
+    /**
+     * Returns an array of the Theme's Stylesheet file paths,
+     * merged with those its Parent, if one exists.
+     * @return array
+     */
+    public function getStylesheetPaths()
+    {
+        $stylesheets = array_map(array($this, 'expandAssetPath'), $this->getStylesheets());
+
+        // prepend parent's styles
+        if ($this->hasParent()) {
+            $stylesheets = array_merge($this->parent->getStylesheetPaths(), $stylesheets);
+        }
+
+        return $stylesheets;
+    }
+
+    /**
+     * Returns an array of the Themes's Stylesheet Asset objects,
+     * merged with those its Parent, if one exists.
+     */
+    public function getStylesheetAssets()
+    {
+        // defer the asset building until it's needed
+        if (is_null($stylesheets = $this->assets->get('stylesheets'))) {
+            $assets = $this->buildAssets();
+            $stylesheets = $assets['stylesheets'];
+        }
+
+        // prepend parent's styles
+        if ($this->hasParent()) {
+            $stylesheets = array_merge($this->parent->getStylesheetAssets(), $stylesheets);
+        }
+
+        return $stylesheets;
+    }
+
+    # ===================================================== #
+    #    JAVASCRIPTS                                        #
+    # ===================================================== #
+
+    /**
+     * @return array
+     */
+    public function getJavaScripts()
+    {
+        return $this->config->get('javascripts', array());
+    }
+
+    /**
+     * Returns an array of the Theme's JavaScript file paths,
+     * merged with those its Parent, if one exists.
+     * @return array
+     */
+    public function getJavaScriptPaths()
+    {
+        $javascripts = array_map(array($this, 'expandAssetPath'), $this->getJavaScripts());
+
+        // prepend parent's scripts
+        if ($this->hasParent()) {
+            $javascripts = array_merge($this->parent->getJavaScriptPaths(), $javascripts);
+        }
+
+        return $javascripts;
+    }
+
+    /**
+     * Returns an array of the Themes's JavaScript Asset objects,
+     * merged with those its Parent, if one exists.
+     */
+    public function getJavaScriptAssets()
+    {
+        // defer the asset building until it's needed
+        if (is_null($javascripts = $this->assets->get('javascripts'))) {
+            $assets = $this->buildAssets();
+            $javascripts = $assets['javascripts'];
+        }
+
+        // prepend parent's scripts
+        if ($this->hasParent()) {
+            $javascripts = array_merge($this->parent->getJavaScriptAssets(), $javascripts);
+        }
+
+        return $javascripts;
+    }
+
+    /**
+     * Expands a relative file path into a full filesystem path.
+     * Paths starting with http: are not altered.
+     * @return string
+     */
+    protected function expandAssetPath($path)
+    {
+        if (preg_match('/^https?:/', $path)) {
+            return $path;
+        } elseif (0 === strpos($path, '/')) {
+            return realpath($this->getDir().'/..').$path;
+        } else {
+            $ext = pathinfo($path, PATHINFO_EXTENSION);
+            return implode('/', array($this->getDir(), $ext, $path));
+        }
+    }
+
+    /**
+     * Gets a Theme's js and css file paths and
+     * creates Asset objects for each of them.
+     * Caches the two arrays in the 'assets' property. 
+     * @return array
+     */
+    protected function buildAssets()
+    {
+        $stylesheets = array_map(function($filePath) {
+            return new Asset($filePath);
+        }, $this->getStylesheetPaths());
+
+        $javascripts = array_map(function($filePath) {
+            return new Asset($filePath);
+        }, $this->getJavaScriptPaths());
+
+        $this->assets->set('stylesheets', $stylesheets);
+        $this->assets->set('javascripts', $javascripts);
+
+        return array(
+            'stylesheets' => $stylesheets,
+            'javascripts' => $javascripts
+        );
     }
 }

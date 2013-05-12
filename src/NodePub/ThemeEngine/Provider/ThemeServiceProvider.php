@@ -9,6 +9,8 @@ use NodePub\ThemeEngine\ThemeManager;
 use NodePub\ThemeEngine\Controller\ThemeController;
 use NodePub\ThemeEngine\Twig\ThemeTwigExtension;
 use NodePub\ThemeEngine\Config\YamlConfigurationProvider;
+use NodePub\ThemeEngine\Model\Asset;
+use NodePub\ThemeEngine\Helper\AssetHelper;
 
 
 use Symfony\Component\HttpKernel\HttpKernelInterface;
@@ -26,6 +28,7 @@ class ThemeServiceProvider implements ServiceProviderInterface
         $app['np.theme.templates.custom_css'] = '_styles.css.twig';
         $app['np.theme.mount_point'] = '/np-admin/themes';
         $app['np.theme.active'] = 'default';
+        $app['np.theme.minify_assets'] = !$app['debug'];
 
         $app['np.theme.settings'] = $app->share(function($app) {
             return array();
@@ -39,12 +42,30 @@ class ThemeServiceProvider implements ServiceProviderInterface
             return $app['np.theme.configuration_provider']->get($app['np.theme.active']);
         });
 
-        $app['np.theme.global_areas'] = $app->share(function($app) {
-            return new ArrayCollection();
+        // $app['np.theme.global_areas'] = $app->share(function($app) {
+        //     return new ArrayCollection();
+        // });
+
+        // $app['np.theme.areas'] = $app->share(function($app) {
+        //     return new ArrayCollection();
+        // });
+
+        $app['np.theme.asset_cache_dir'] = $app->share(function($app) {
+            $namespace = $app['np.theme.manager']->getActiveTheme()->getNamespace();
+            return $app['cache_dir'].'/themes/'.$namespace;
         });
 
-        $app['np.theme.areas'] = $app->share(function($app) {
-            return new ArrayCollection();
+        $app['np.theme.asset_file_cache'] = $app->share(function($app) {
+            return new Assetic\Cache\FilesystemCache($app['np.theme.asset_cache_dir']);
+        });
+
+        $app['np.theme.asset_cache.lifetime'] = 86400; // 24 hours in seconds
+
+        $app['np.theme.asset_cache'] = $app->share(function($app) {
+            return new Assetic\Cache\ExpiringCache(
+                $app['np.theme.asset_file_cache'],
+                $app['np.theme.asset_cache.lifetime']
+            );
         });
         
         $app['np.theme.manager'] = $app->share(function($app) {
@@ -69,7 +90,7 @@ class ThemeServiceProvider implements ServiceProviderInterface
             // iterate over loaded themes and add their path and namespace to Twig
             $themes = $app['np.theme.manager']->loadThemes();
             foreach ($themes as $theme) {
-                $app['twig.loader.filesystem']->addPath($theme->getPath(), $theme->getNamespace());
+                $app['twig.loader.filesystem']->addPath($theme->getDir(), $theme->getNamespace());
             }
 
             $app['np.theme.manager']->activateTheme($app['np.theme.active']);
@@ -84,7 +105,8 @@ class ThemeServiceProvider implements ServiceProviderInterface
                 $twig->addGlobal('standalone', true); // TODO: this will determine if we're in the larger NP app
                 $twig->addExtension(new ThemeTwigExtension(
                     $app['np.theme.manager'],
-                    $app['np.theme.templates.custom_css']
+                    $app['np.theme.templates.custom_css'],
+                    $app['np.theme.minify_assets']
                 ));
 
                 return $twig;
@@ -116,9 +138,15 @@ class ThemeServiceProvider implements ServiceProviderInterface
             return $response;
         });
 
-        // todo add a finish event to generate asset caches
-        $app->finish(function(Request $request, Response $response) {
-            
+        $app->finish(function(Request $request, Response $response) use ($app) {
+            # Recompile assets if their cache is out of date
+            # Run from finish callback so it doesn't slow down the request, but might be better as a cron job
+            $assetHelper = new AssetHelper(
+                $app['np.theme.manager']->getActiveTheme(),
+                $app['np.theme.asset_cache_dir']
+            );
+
+            $assetHelper->validateCache();
         });
 
         # ===================================================== #
@@ -132,6 +160,14 @@ class ThemeServiceProvider implements ServiceProviderInterface
 
             return $theme;
         };
+
+        $app->get('/themes/{theme}'.AssetHelper::PATH_MIN_CSS, 'np.theme.controller:minifyStylesheetsAction')
+            ->convert('theme', $themeProvider)
+            ->bind('get_minified_stylesheets');
+
+        $app->get('/themes/{theme}'.AssetHelper::PATH_MIN_JS, 'np.theme.controller:minifyJavascriptsAction')
+            ->convert('theme', $themeProvider)
+            ->bind('get_minified_javascripts');
 
         $themeControllers = $app['controllers_factory'];
 
@@ -150,19 +186,14 @@ class ThemeServiceProvider implements ServiceProviderInterface
             ->convert('theme', $themeProvider)
             ->bind('get_theme_preview');
 
+        // $themeControllers->get('/{theme}/clear-cache', 'np.theme.controller:clearCacheAction')
+        //     ->convert('theme', $themeProvider)
+        //     ->bind('theme_clear_cache');
+
         $themeControllers->match('/switcher/referer/{referer}', 'np.theme.controller:switchThemeAction')
             ->value('referer', '')
             ->bind('theme_switcher');
 
         $app->mount($app['np.theme.mount_point'], $themeControllers);
-
-        // minified asset urls
-        $app->get('/themes/{theme}/css/styles.min.css', 'np.theme.controller:minifyStylesheetsAction')
-            ->convert('theme', $themeProvider)
-            ->bind('get_minified_stylesheets');
-
-        $app->get('/themes/{theme}/js/javascripts.min.css', 'np.theme.controller:minifyJavascriptsAction')
-            ->convert('theme', $themeProvider)
-            ->bind('get_minified_javascripts');
     }
 }

@@ -3,18 +3,22 @@
 namespace NodePub\ThemeEngine\Twig;
 
 use NodePub\ThemeEngine\ThemeManager;
+use NodePub\ThemeEngine\Model\Asset;
+use NodePub\ThemeEngine\Helper\AssetHelper;
 
 class ThemeTwigExtension extends \Twig_Extension
 {
-    protected $themeManager;
-    protected $customCssTemplateName;
+    protected $themeManager,
+              $customCssTemplateName,
+              $minifyAssets;
 
     protected $twigEnvironment;
 
-    public function __construct(ThemeManager $themeManager, $customCssTemplateName)
+    public function __construct(ThemeManager $themeManager, $customCssTemplateName, $minifyAssets = true)
     {
         $this->themeManager = $themeManager;
         $this->customCssTemplateName = $customCssTemplateName;
+        $this->minifyAssets = $minifyAssets;
     }
 
     public function getName()
@@ -36,19 +40,19 @@ class ThemeTwigExtension extends \Twig_Extension
         );
     }
 
-    public function themeStyles($themeName = null)
+    public function themeStyles()
     {
-        $globals = $this->twigEnvironment->getGlobals();
-        $linkTag = '<link rel="stylesheet" href="%s%s">';
-        $stylesheets = $$this->themeManager->getActiveTheme()->getStylesheetPaths();
+        $theme = $this->themeManager->getActiveTheme();
+        $linkTag = '<link rel="stylesheet" href="%s">';
+        $stylesheets = $theme->getStylesheetAssets();
         $stylesheetLinks = array();
 
-        if (isset($globals['app']['debug'])) {
-            foreach ($stylesheets as $stylesheet) {
-                $stylesheetLinks[] = sprintf($linkTag, $this->getThemesPath(), $stylesheet);
-            }
+        if (true === $this->minifyAssets) {
+            $stylesheetLinks[] = sprintf($linkTag, $this->getThemesPath().$theme->getNamespace().AssetHelper::PATH_MIN_CSS);
         } else {
-            $stylesheetLinks[] = sprintf($linkTag, $this->getThemesPath(), '/css/styles.min.css');
+            foreach ($stylesheets as $asset) {
+                $stylesheetLinks[] = sprintf($linkTag, $asset->getWebPath());
+            }
         }
 
         return implode(PHP_EOL, $stylesheetLinks) . PHP_EOL . $this->getCustomizedCss() . PHP_EOL;
@@ -56,10 +60,17 @@ class ThemeTwigExtension extends \Twig_Extension
 
     public function themeJavaScripts()
     {
+        $theme = $this->themeManager->getActiveTheme();
+        $scriptTag = '<script src="%s"></script>';
+        $scripts = $theme->getJavaScriptAssets();
         $scriptLinks = array();
-        $scripts = $this->themeManager->getActiveTheme()->getJavaScriptPaths();
-        foreach ($scripts as $script) {
-            $scriptLinks[] = sprintf('<script src="%s%s"></script>', $this->getThemesPath(), $script);
+
+        if (true === $this->minifyAssets) {
+            $scriptLinks[] = sprintf($scriptTag, $this->getThemesPath().$theme->getNamespace().AssetHelper::PATH_MIN_JS);
+        } else {
+            foreach ($scripts as $asset) {
+                $scriptLinks[] = sprintf($scriptTag, $asset->getWebPath());
+            } 
         }
 
         return implode(PHP_EOL, $scriptLinks);

@@ -9,8 +9,7 @@ use NodePub\ThemeEngine\ThemeManager;
 use NodePub\ThemeEngine\Theme;
 use NodePub\ThemeEngine\Config\ConfigurationProviderInterface;
 use NodePub\ThemeEngine\Form\Type\ThemeSettingsType;
-
-
+use NodePub\ThemeEngine\Helper\AssetHelper;
 
 class ThemeController
 {
@@ -146,20 +145,24 @@ class ThemeController
 
     public function minifyStylesheetsAction(Theme $theme)
     {
-        $stylesheets = $this->themeManager->getActiveTheme()->getStylesheetPaths();
+        $assetHelper = new AssetHelper($theme);
+        $css = $assetHelper->compileStylesheets();
 
-        $am = new AssetManager();
-        foreach ($stylesheets as $stylesheet) {
-            // todo skip absolute urls
-            $am->set('css', new FileAsset($this->themeManager->getThemesPath().$stylesheet));
-        }
+        $response = new Response($css);
+        $response->headers->set('Content-Type', 'text/css');
 
-        $fm = new FilterManager();
-        $fm->set('sass', new SassFilter('/path/to/parser/sass'));
-        $fm->set('yui_css', new Yui\CssCompressorFilter('/path/to/yuicompressor.jar'));
+        return $response;
+    }
 
-        $writer = new AssetWriter('/path/to/web');
-        $writer->writeManagerAssets($am);
+    public function minifyJavascriptsAction(Theme $theme)
+    {
+        $assetHelper = new AssetHelper($theme);
+        $js = $assetHelper->compileJavaScripts();
+
+        $response = new Response($js);
+        $response->headers->set('Content-Type', 'application/javascript');
+
+        return $response;
     }
 
     protected function getSettingsForm(Theme $theme)

@@ -152,7 +152,7 @@ class ThemeManager
             $themeConfig = Yaml::parse($file->getPathname());
             
             // Add the directory path as part of the config
-            $themeConfig['path'] = $file->getPath();
+            $themeConfig['dir'] = $file->getPath();
 
             $theme = new Theme($themeConfig);
 
