@@ -113,6 +113,8 @@ class ThemeController
                 'label' => 'Theme Preview',
                 'attr' => array('class' => '-themeSwitchSelect')
             ))
+            ->add('reset', 'submit')
+            ->add('submit', 'submit')
             ->getForm();
 
         if ('POST' === $request->getMethod()) {
@@ -121,7 +123,7 @@ class ThemeController
             if ($form->isValid()) {
                 $data = $form->getData();
 
-                if (isset($data['cancel'])) {
+                if ($form->get('reset')->isClicked()) {
                     $this->app['session']->remove('theme_preview');
                 } else {
                     // Save selected theme to session
