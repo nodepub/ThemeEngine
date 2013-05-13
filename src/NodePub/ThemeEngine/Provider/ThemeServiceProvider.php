@@ -5,13 +5,14 @@ namespace NodePub\ThemeEngine\Provider;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 use Doctrine\Common\Collections\ArrayCollection;
+
+use NodePub\ThemeEngine\Provider\ThemeControllerProvider;
 use NodePub\ThemeEngine\ThemeManager;
 use NodePub\ThemeEngine\Controller\ThemeController;
 use NodePub\ThemeEngine\Twig\ThemeTwigExtension;
 use NodePub\ThemeEngine\Config\YamlConfigurationProvider;
 use NodePub\ThemeEngine\Model\Asset;
 use NodePub\ThemeEngine\Helper\AssetHelper;
-
 
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -140,13 +141,14 @@ class ThemeServiceProvider implements ServiceProviderInterface
 
         $app->finish(function(Request $request, Response $response) use ($app) {
             # Recompile assets if their cache is out of date
-            # Run from finish callback so it doesn't slow down the request, but might be better as a cron job
+            # Run from finish callback so it doesn't slow down the request,
+            # but might be better as a cron job
             $assetHelper = new AssetHelper(
                 $app['np.theme.manager']->getActiveTheme(),
                 $app['np.theme.asset_cache_dir']
             );
 
-            $assetHelper->validateCache();
+            $assetHelper->validateCaches();
         });
 
         # ===================================================== #
@@ -169,31 +171,6 @@ class ThemeServiceProvider implements ServiceProviderInterface
             ->convert('theme', $themeProvider)
             ->bind('get_minified_javascripts');
 
-        $themeControllers = $app['controllers_factory'];
-
-        $themeControllers->get('/', 'np.theme.controller:themesAction')
-            ->bind('get_themes');
-
-        $themeControllers->get('/{theme}/settings', 'np.theme.controller:settingsAction')
-            ->convert('theme', $themeProvider)
-            ->bind('get_theme_settings');
-
-        $themeControllers->post('/{theme}/settings', 'np.theme.controller:postSettingsAction')
-            ->convert('theme', $themeProvider)
-            ->bind('post_theme_settings');
-
-        $themeControllers->get('/{theme}/preview/{layout}', 'np.theme.controller:previewLayoutAction')
-            ->convert('theme', $themeProvider)
-            ->bind('get_theme_preview');
-
-        // $themeControllers->get('/{theme}/clear-cache', 'np.theme.controller:clearCacheAction')
-        //     ->convert('theme', $themeProvider)
-        //     ->bind('theme_clear_cache');
-
-        $themeControllers->match('/switcher/referer/{referer}', 'np.theme.controller:switchThemeAction')
-            ->value('referer', '')
-            ->bind('theme_switcher');
-
-        $app->mount($app['np.theme.mount_point'], $themeControllers);
+        $app->mount($app['np.theme.mount_point'], new ThemeControllerProvider());
     }
 }

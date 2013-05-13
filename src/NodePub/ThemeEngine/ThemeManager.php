@@ -208,7 +208,7 @@ class ThemeManager
                 ->files()
                 ->name('*.'.$this->templateFileExtension)
                 ->notName('/^_/')
-                ->in($theme->getPath())
+                ->in($theme->getDir())
                 ;
             
             $layouts = $this->getFilenames($layoutFiles);
