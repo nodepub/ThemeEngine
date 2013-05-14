@@ -28,8 +28,12 @@ class ThemeServiceProvider implements ServiceProviderInterface
         $app['np.theme.templates.ext'] = 'twig';
         $app['np.theme.templates.custom_css'] = '_styles.css.twig';
         $app['np.theme.mount_point'] = '/np-admin/themes';
-        $app['np.theme.active'] = 'default';
+        $app['np.theme.default'] = 'default';
         $app['np.theme.minify_assets'] = !$app['debug'];
+
+        $app['np.theme.active'] = $app->share(function($app) {
+            return $app['session']->get('theme_preview') ?: $app['np.theme.default'];
+        });
 
         $app['np.theme.settings'] = $app->share(function($app) {
             return array();
@@ -117,38 +121,43 @@ class ThemeServiceProvider implements ServiceProviderInterface
         });
 
         $app->after(function(Request $request, Response $response) use ($app) {
-
+            # Inject the theme switcher form onto the page
+            # if 'theme_preview' is set in the session
             if ($theme = $app['session']->get('theme_preview')) {
 
-                $html = $response->getContent();
-
-                $subRequest = Request::create($app['url_generator']->generate('theme_switcher', array('referer' => urlencode($request->getPathInfo()))));
-                $response = $app->handle($subRequest, HttpKernelInterface::SUB_REQUEST, false);
-
-                $themeSwitcher = $response->getContent();
-
-                if (preg_match("~^([ \t]?)</body~mi", $html, $matches)) {
-                    // Try to insert it just before </body>
-                    $replacement = sprintf("%s\t%s\n%s", $matches[1], $themeSwitcher, $matches[0]);
-                    $html = str_replace($matches[0], $replacement, $html);
+                if (function_exists('mb_stripos')) {
+                    $posrFunction = 'mb_strripos';
+                    $substrFunction = 'mb_substr';
+                } else {
+                    $posrFunction = 'strripos';
+                    $substrFunction = 'substr';
                 }
 
-                $response->setContent($html);
-            }
+                $content = $response->getContent();
 
-            return $response;
+                if (false !== $pos = $posrFunction($content, '</body>')) {
+                    $subRequest = Request::create($app['url_generator']->generate('theme_switcher', array('referer' => urlencode($request->getPathInfo()))));
+                    $subResponse = $app->handle($subRequest, HttpKernelInterface::SUB_REQUEST, false);
+                    $themeSwitcher = "\n".str_replace("\n", '', $subResponse->getContent())."\n";
+
+                    $content = $substrFunction($content, 0, $pos).$themeSwitcher.$substrFunction($content, $pos);
+                    $response->setContent($content);
+                }
+            }
         });
 
         $app->finish(function(Request $request, Response $response) use ($app) {
-            # Recompile assets if their cache is out of date
-            # Run from finish callback so it doesn't slow down the request,
-            # but might be better as a cron job
-            $assetHelper = new AssetHelper(
-                $app['np.theme.manager']->getActiveTheme(),
-                $app['np.theme.asset_cache_dir']
-            );
-
-            $assetHelper->validateCaches();
+            if ($app['np.theme.minify_assets']) {
+                # Recompile assets if their cache is out of date
+                # Run from finish callback so it doesn't slow down the request,
+                # but might be better as a cron job
+                $assetHelper = new AssetHelper(
+                    $app['np.theme.manager']->getActiveTheme(),
+                    $app['np.theme.asset_cache_dir'],
+                    $app['monolog']
+                );
+                $assetHelper->validateCaches();
+            }
         });
 
         # ===================================================== #

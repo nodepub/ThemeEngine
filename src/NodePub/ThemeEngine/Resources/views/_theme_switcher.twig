@@ -1,3 +1,25 @@
-<form action="{{ path('theme_switcher') }}" method="post">
+{% if embed_styles is defined %}
+<style type="text/css">
+    .np_theme_switcher {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        padding: 20px;
+        background: green;
+        border: 2px solid #fff;
+        box-shadow: 2px 2px 3px #000;
+    }
+    .np_theme_switcher label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 3px;
+    }
+    .np_theme_switcher button {
+        float: left;
+        margin-right: 20px;
+    }
+</style>
+{% endif %}
+<form action="{{ path('theme_switcher') }}" method="post" class="np_theme_switcher">
     {{ form_widget(form) }}
 </form>

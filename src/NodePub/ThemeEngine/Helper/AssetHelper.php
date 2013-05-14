@@ -4,12 +4,16 @@ namespace NodePub\ThemeEngine\Helper;
 
 use NodePub\ThemeEngine\Theme;
 use NodePub\ThemeEngine\Model\Asset as NpAsset;
+
 use Assetic\Asset\AssetCollection;
 use Assetic\Asset\FileAsset;
 use Assetic\Asset\HttpAsset;
 use Assetic\Filter\Yui\JsCompressorFilter;
 use Assetic\Filter\Yui\CssCompressorFilter;
 use Assetic\Filter\SassFilter;
+
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Filesystem\Exception\IOException;
 
 class AssetHelper
 {
@@ -18,13 +22,17 @@ class AssetHelper
     const PATH_MIN_CSS = '/css/styles.min.css';
 
     protected $theme,
-              $jarPath;
+              $logger,
+              $jarPath,
+              $fs;
 
-    function __construct(Theme $theme, $cacheDir)
+    function __construct(Theme $theme, $cacheDir, $logger)
     {
         $this->theme = $theme;
         $this->cacheDir = $cacheDir;
+        $this->logger = $logger;
         $this->jarPath = __DIR__.'/../../../../bin/yuicompressor.jar';
+        $this->fs = new Filesystem();
     }
 
     public function getCssMinPath()
@@ -66,7 +74,7 @@ class AssetHelper
 
     public function cacheCompilation($cachePath, $compilation)
     {
-        static::write($cachePath, $compilation);
+        $this->write($cachePath, $compilation);
     }
 
     public function validateCaches()
@@ -100,19 +108,26 @@ class AssetHelper
         }
 
         $hash = hash_final($hash);
-
         $cachePath = $this->cacheDir.$cacheFile;
 
-        if (!file_exists($cachePath)) {
-            touch($cachePath);
+        if (!$this->fs->exists($cachePath)) {
+            try {
+                $this->fs->touch($cachePath);
+            } catch (IOException $e) {
+                $this->logger->addError("Failed to create theme cache file at [$cachePath]");
+            }
         }
 
         if (0 !== strcmp($hash, file_get_contents($cachePath))) {
             // recompile the assets
             call_user_func($compileCallback);
 
-            // update the cache
-            file_put_contents($cachePath, $hash);
+            try {
+                // update the cache
+                file_put_contents($cachePath, $hash);
+            } catch (\Exception $e) {
+                $this->logger->addError("Failed to write theme cache file at [$cachePath]");
+            }
         }
     }
 
@@ -127,7 +142,7 @@ class AssetHelper
             try {
                 $collection->add($this->getAsseticAsset($asset));
             } catch (\Exception $e) {
-                // TODO log the error, it's not critical
+                $this->logger->addError("Failed to create asset [$asset]. ".$e->getMessage());
             }
         }
 
@@ -174,14 +189,14 @@ class AssetHelper
         return $filters;
     }
 
-    protected static function write($path, $contents)
+    protected function write($path, $contents)
     {
         if (!is_dir($dir = dirname($path)) && false === @mkdir($dir, 0777, true)) {
-            throw new \RuntimeException('Unable to create directory '.$dir);
+            $this->logger->addError("Unable to create directory [$dir]");
         }
 
-        if (false === @file_put_contents($path, $contents)) {
-            throw new \RuntimeException('Unable to write file '.$path);
+        if (false === file_put_contents($path, $contents)) {
+            $this->logger->addError("Unable to write file [$path]");
         }
     }
 }

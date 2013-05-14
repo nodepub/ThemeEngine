@@ -9,6 +9,7 @@ use NodePub\ThemeEngine\ThemeManager;
 use NodePub\ThemeEngine\Theme;
 use NodePub\ThemeEngine\Config\ConfigurationProviderInterface;
 use NodePub\ThemeEngine\Form\Type\ThemeSettingsType;
+use NodePub\ThemeEngine\Form\Type\ThemeSwitcherType;
 use NodePub\ThemeEngine\Helper\AssetHelper;
 
 class ThemeController
@@ -103,6 +104,10 @@ class ThemeController
 
         if ($previouslySelectedTheme = $this->app['session']->get('theme_preview')) {
             $defaultFormData['theme'] = $previouslySelectedTheme;
+            $resetAttrs = array();
+        } else {
+            $defaultFormData['theme'] = $this->themeManager->getActiveTheme()->getNamespace();
+            $resetAttrs = array('disabled' => true);
         }
 
         $form = $this->app['form.factory']->createBuilder('form', $defaultFormData)
@@ -113,7 +118,7 @@ class ThemeController
                 'label' => 'Theme Preview',
                 'attr' => array('class' => '-themeSwitchSelect')
             ))
-            ->add('reset', 'submit')
+            ->add('reset', 'submit', array('attr' => $resetAttrs))
             ->add('submit', 'submit')
             ->getForm();
 
@@ -135,8 +140,12 @@ class ThemeController
             }
         }
 
-        // display the form
-        return $this->app['twig']->render('@theme_admin/_theme_switcher.twig', array('form' => $form->createView()));
+        // display the form on GET
+        return $this->app['twig']->render('@theme_admin/_theme_switcher.twig',
+            array(
+                'form' => $form->createView(),
+                'embed_styles' => true
+            ));
     }
 
     public function resetThemeAction(Request $request, $referer)
