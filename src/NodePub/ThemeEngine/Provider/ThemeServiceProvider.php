@@ -47,14 +47,6 @@ class ThemeServiceProvider implements ServiceProviderInterface
             return $app['np.theme.configuration_provider']->get($app['np.theme.active']);
         });
 
-        // $app['np.theme.global_areas'] = $app->share(function($app) {
-        //     return new ArrayCollection();
-        // });
-
-        // $app['np.theme.areas'] = $app->share(function($app) {
-        //     return new ArrayCollection();
-        // });
-
         $app['np.theme.asset_cache_dir'] = $app->share(function($app) {
             $namespace = $app['np.theme.manager']->getActiveTheme()->getNamespace();
             return $app['cache_dir'].'/themes/'.$namespace;
@@ -118,32 +110,6 @@ class ThemeServiceProvider implements ServiceProviderInterface
             }));
 
             $app['twig.loader.filesystem']->addPath(__DIR__.'/../Resources/views', 'theme_admin');
-        });
-
-        $app->after(function(Request $request, Response $response) use ($app) {
-            # Inject the theme switcher form onto the page
-            # if 'theme_preview' is set in the session
-            if ($theme = $app['session']->get('theme_preview')) {
-
-                if (function_exists('mb_stripos')) {
-                    $posrFunction = 'mb_strripos';
-                    $substrFunction = 'mb_substr';
-                } else {
-                    $posrFunction = 'strripos';
-                    $substrFunction = 'substr';
-                }
-
-                $content = $response->getContent();
-
-                if (false !== $pos = $posrFunction($content, '</body>')) {
-                    $subRequest = Request::create($app['url_generator']->generate('theme_switcher', array('referer' => urlencode($request->getPathInfo()))));
-                    $subResponse = $app->handle($subRequest, HttpKernelInterface::SUB_REQUEST, false);
-                    $themeSwitcher = "\n".str_replace("\n", '', $subResponse->getContent())."\n";
-
-                    $content = $substrFunction($content, 0, $pos).$themeSwitcher.$substrFunction($content, $pos);
-                    $response->setContent($content);
-                }
-            }
         });
 
         $app->finish(function(Request $request, Response $response) use ($app) {
