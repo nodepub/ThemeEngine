@@ -42,6 +42,11 @@ class Theme
         return $this->config->get('namespace', basename($this->getDir()));
     }
 
+    public function getDescription()
+    {
+        return $this->config->get('description', '');
+    }
+
     public function getParent()
     {
         return $this->parent;
@@ -194,6 +199,20 @@ class Theme
     public function getJavaScripts()
     {
         return $this->config->get('javascripts', array());
+    }
+
+    public function addJavaScript($path)
+    {
+        $javascripts = $this->getJavaScripts();
+        $javascripts[] = $path;
+        $this->config->set('javascripts', $javascripts);
+    }
+
+    public function addJavaScripts(array $paths)
+    {
+        $javascripts = $this->getJavaScripts();
+        $javascripts = array_merge($javascripts, $paths);
+        $this->config->set('javascripts', $javascripts);
     }
 
     /**

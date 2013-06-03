@@ -2,10 +2,6 @@
 
 namespace NodePub\ThemeEngine\Provider;
 
-use Silex\Application;
-use Silex\ServiceProviderInterface;
-use Doctrine\Common\Collections\ArrayCollection;
-
 use NodePub\ThemeEngine\Provider\ThemeControllerProvider;
 use NodePub\ThemeEngine\ThemeManager;
 use NodePub\ThemeEngine\Controller\ThemeController;
@@ -14,6 +10,9 @@ use NodePub\ThemeEngine\Config\YamlConfigurationProvider;
 use NodePub\ThemeEngine\Model\Asset;
 use NodePub\ThemeEngine\Helper\AssetHelper;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Silex\Application;
+use Silex\ServiceProviderInterface;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -27,12 +26,26 @@ class ThemeServiceProvider implements ServiceProviderInterface
     {
         $app['np.theme.templates.ext'] = 'twig';
         $app['np.theme.templates.custom_css'] = '_styles.css.twig';
-        $app['np.theme.mount_point'] = '/np-admin/themes';
         $app['np.theme.default'] = 'default';
         $app['np.theme.minify_assets'] = !$app['debug'];
 
         $app['np.theme.active'] = $app->share(function($app) {
+
+            // One-off page previews
+            if ($theme = $app['session']->get('theme_temp_preview')) {
+                $app['session']->remove('theme_temp_preview');
+                return $theme;
+            }
+
             return $app['session']->get('theme_preview') ?: $app['np.theme.default'];
+        });
+
+        $app['np.theme.mount_point'] = $app->share(function($app) {
+            $mountPoint = '/themes';
+            if (isset($app['np.admin.mount_point'])) {
+                $mountPoint = $app['np.admin.mount_point'] . $mountPoint;
+            }
+            return $mountPoint;
         });
 
         $app['np.theme.settings'] = $app->share(function($app) {

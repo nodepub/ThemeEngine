@@ -2,15 +2,16 @@
 
 namespace NodePub\ThemeEngine\Controller;
 
-use Silex\Application;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use NodePub\ThemeEngine\ThemeManager;
 use NodePub\ThemeEngine\Theme;
 use NodePub\ThemeEngine\Config\ConfigurationProviderInterface;
 use NodePub\ThemeEngine\Form\Type\ThemeSettingsType;
 use NodePub\ThemeEngine\Form\Type\ThemeSwitcherType;
 use NodePub\ThemeEngine\Helper\AssetHelper;
+use Silex\Application;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\Flash\FlashBag;
 
 class ThemeController
 {
@@ -30,18 +31,25 @@ class ThemeController
 
     public function themesAction(Request $request)
     {
-        $themes = $this->themeManager->loadThemes();
+        $loadedThemes = $this->themeManager->loadThemes();
+        $activeTheme = $this->themeManager->getActiveTheme();
+        $themes = array($activeTheme); // add active first
         $templates = array();
 
-        foreach ($themes as $theme) {
+        foreach ($loadedThemes as $theme) {
             $templates[$theme->getNamespace()] = $this->themeManager->getThemeLayouts($theme->getNamespace());
+            if ($activeTheme->getNamespace() !== $theme->getNamespace()) {
+                $themes[]= $theme;
+            }
         }
 
         return $this->app['twig']->render('@theme_admin/themes.twig', array(
             'layout' => $this->app['np.admin.template'],
+            'standalone' => false,
             'themes' => $themes,
             'templates' => $templates,
-            'referer' => urlencode($request->getPathInfo())
+            'referer' => urlencode($request->getPathInfo()),
+            'active_theme' => $activeTheme->getNamespace()
         ));
     }
 
@@ -51,6 +59,7 @@ class ThemeController
 
         return $this->app['twig']->render('@theme_admin/settings.twig', array(
             'layout' => $this->app['np.admin.template'],
+            'standalone' => false,
             'active_theme' => $theme,
             'form'  => $this->getSettingsForm($theme)->createView()
         ));
@@ -94,6 +103,22 @@ class ThemeController
         return $this->app['twig']->render('@theme_admin/preview.twig', array(
             'layout' => $template
         ));
+    }
+
+    public function getPreviewAction(Theme $theme, $url)
+    {
+        $this->app['session']->set('theme_preview', $theme->getNamespace());
+        return $this->app->redirect(urldecode($url));
+    }
+
+    /**
+     * Sets the preview theme using the session flash, so that it's only
+     * set for the next page view.
+     */
+    public function getPreviewUrlAction(Theme $theme, $url)
+    {
+        $this->app['session']->set('theme_temp_preview', $theme->getNamespace());
+        return $this->app->redirect(urldecode($url));
     }
 
     public function switchThemeAction(Request $request, $referer)
@@ -152,6 +177,13 @@ class ThemeController
     {
         $this->app['session']->remove('theme_preview');
         return $this->app->redirect(urldecode($referer));
+    }
+
+    public function postActivateAction(Theme $theme)
+    {
+        // TODO: save the theme for the current site
+        
+        return $this->app->json(array('message' => 'Theme activated.'));
     }
 
     public function minifyStylesheetsAction(Theme $theme)

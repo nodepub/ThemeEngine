@@ -1,10 +1,14 @@
 {% extends layout %}
 
-{% block body %}
-    <h1>{{ active_theme.name }}</h1>
-    <form action="{{ path('post_theme_settings', {'theme': active_theme.namespace}) }}" method="post">
-        {{ form_widget(form) }}
-        <a href="{{ path('get_themes') }}">Cancel</a>
-        <input type="submit" name="Save" />
-    </form>
+{% block nav %}<a href="{{ path('admin_themes') }}">Themes</a> <i class="icon-chevron-right"></i> {{ active_theme.name }}{% endblock %}
+
+{% block content %}
+    {% block body %}
+        {% if standalone %}<h1>{{ active_theme.name }}</h1>{% endif %}
+        <form action="{{ path('post_theme_settings', {'theme': active_theme.namespace}) }}" method="post">
+            {{ form_widget(form) }}
+            <a href="{{ path('admin_themes') }}" class="btn">Cancel</a>
+            <input type="submit" name="Save" class="btn btn-primary" />
+        </form>
+    {% endblock %}
 {% endblock %}

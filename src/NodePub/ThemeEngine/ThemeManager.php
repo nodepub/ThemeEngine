@@ -9,6 +9,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use NodePub\ThemeEngine\Theme;
 use NodePub\ThemeEngine\ThemeEvents;
 use NodePub\ThemeEngine\Event\ThemeActivateEvent;
+use NodePub\ThemeEngine\Event\ThemeManagerInitEvent;
 
 
 class ThemeManager
@@ -191,6 +192,8 @@ class ThemeManager
             }
         }
 
+        $this->eventDispatcher->dispatch(ThemeEvents::THEME_MANAGER_INITIALIZED, new ThemeManagerInitEvent($this));
+
         $this->initialized = true;
     }
     
@@ -238,6 +241,11 @@ class ThemeManager
     public function getTheme($themeName)
     {
         return $this->activeThemes->get($this->normalizeName($themeName));
+    }
+
+    public function setTheme(Theme $theme)
+    {
+        return $this->activeThemes->set($theme->getNamespace(), $theme);
     }
 
     /**

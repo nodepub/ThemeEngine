@@ -20,19 +20,33 @@ class ThemeControllerProvider implements ControllerProviderInterface
         };
 
         $controllers->get('/', 'np.theme.controller:themesAction')
-            ->bind('get_themes');
+            ->bind('admin_themes');
 
         $controllers->get('/{theme}/settings', 'np.theme.controller:settingsAction')
             ->convert('theme', $themeProvider)
-            ->bind('get_theme_settings');
+            ->bind('theme_settings');
 
         $controllers->post('/{theme}/settings', 'np.theme.controller:postSettingsAction')
             ->convert('theme', $themeProvider)
             ->bind('post_theme_settings');
 
-        $controllers->get('/{theme}/preview/{layout}', 'np.theme.controller:previewLayoutAction')
+        $controllers->get('/{theme}/preview/{url}', 'np.theme.controller:getPreviewAction')
             ->convert('theme', $themeProvider)
-            ->bind('get_theme_preview');
+            ->value('url', urlencode('/'))
+            ->bind('theme_preview');
+
+        $controllers->get('/{theme}/preview-url/{url}', 'np.theme.controller:getPreviewUrlAction')
+            ->convert('theme', $themeProvider)
+            ->value('url', urlencode('/'))
+            ->bind('theme_preview_url');
+
+        $controllers->get('/{theme}/preview-layout/{layout}', 'np.theme.controller:previewLayoutAction')
+            ->convert('theme', $themeProvider)
+            ->bind('theme_preview_layout');
+
+        $controllers->post('/{theme}/activate', 'np.theme.controller:postActivateAction')
+            ->convert('theme', $themeProvider)
+            ->bind('post_theme_activate');
 
         $controllers->match('/switcher/referer/{referer}', 'np.theme.controller:switchThemeAction')
             ->value('referer', '')

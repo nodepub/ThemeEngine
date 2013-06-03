@@ -1,45 +1,74 @@
 {% extends layout %}
 
-{% block body %}
-    {% if standalone %}
-        {% for flashMessage in app.session.flashbag.get('notice') %}
-            <div class="alert alert-info">
-                {{ flashMessage }}
+{% block nav %}Themes{% endblock %}
+
+{% block content %}
+    {% block body %}
+        {% if standalone %}
+            {% for flashMessage in app.session.flashbag.get('notice') %}
+                <div class="alert alert-info">
+                    {{ flashMessage }}
+                </div>
+            {% endfor %}
+
+            {% for flashMessage in app.session.flashbag.get('info') %}
+                <div class="alert alert-info">
+                    {{ flashMessage }}
+                </div>
+            {% endfor %}
+
+            {% for flashMessage in app.session.flashbag.get('error') %}
+                <div class="alert alert-error">
+                    {{ flashMessage }}
+                </div>
+            {% endfor %}
+
+            {% for flashMessage in app.session.flashbag.get('success') %}
+                <div class="alert alert-success">
+                    {{ flashMessage }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% if standalone %}
+            {{ render(path('theme_switcher', {'referer': app.request.pathInfo|url_encode})) }}
+            <h1>Themes</h1>
+        {% endif %}
+        
+        {% for theme in themes %}
+            <div class="row np_theme_info">
+                <div class="span5">
+                    <h2>{{ theme.name }}{% if loop.first %} (active){% endif %}</h2>
+                    <p>{{ theme.description }}</p>
+                    <h3>Templates:</h3>
+                    <ul>
+                    {% for layout in templates[theme.namespace] %}
+                        <li><a href="{{ path('theme_preview_layout', {'theme': theme.namespace, 'layout': layout}) }}">{{ layout }}</a></li>
+                    {% else %}
+                        <li>No templates found for this theme.</li>
+                    {% endfor %}
+                    </ul>
+                </div>
+                <div class="span5">
+                    <ul class="thumbnails">
+                        <li class="span4">
+                            <div class="thumbnail">
+                                <div class="caption">
+
+                                    <div class="np_theme_preview_thumb">
+                                        <div class="np_iframe_overlay"></div>
+                                        <iframe src="{{ path('theme_preview_url', {'theme': theme.namespace, 'url': '/'|url_encode}) }}" width="816" height="525" scrolling="no"></iframe>
+                                    </div>
+
+                                    <a href="{{ path('theme_preview', {'theme': theme.namespace}) }}" class="btn" data-action="ajax_post">Preview</a>
+                                    <a href="{{ path('theme_settings', {'theme': theme.namespace}) }}" class="btn">Customize</a>
+                                    <a href="{{ path('post_theme_activate', {'theme': theme.namespace}) }}" class="btn btn-primary{% if loop.first %} disabled{% endif %}" data-action="activate_theme" data-theme-namespace={{ theme.namespace }}>Activate</a>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
             </div>
         {% endfor %}
-
-        {% for flashMessage in app.session.flashbag.get('info') %}
-            <div class="alert alert-info">
-                {{ flashMessage }}
-            </div>
-        {% endfor %}
-
-        {% for flashMessage in app.session.flashbag.get('error') %}
-            <div class="alert alert-error">
-                {{ flashMessage }}
-            </div>
-        {% endfor %}
-
-        {% for flashMessage in app.session.flashbag.get('success') %}
-            <div class="alert alert-success">
-                {{ flashMessage }}
-            </div>
-        {% endfor %}
-    {% endif %}
-
-    {{ render(path('theme_switcher', {'referer': app.request.pathInfo|url_encode})) }}
-
-    <h1>Themes</h1>
-    {% for theme in themes %}
-        <h2>{{ theme.name }}</h2>
-        <a href="{{ path('get_theme_settings', {'theme': theme.namespace}) }}">Settings</a>
-        <h3>Templates:</h3>
-        <ul>
-        {% for layout in templates[theme.namespace] %}
-            <li><a href="{{ path('get_theme_preview', {'theme': theme.namespace, 'layout': layout}) }}">{{ layout }}</a></li>
-        {% else %}
-            <li>No templates found for this theme.</li>
-        {% endfor %}
-        </ul>
-    {% endfor %}
+    {% endblock %}
 {% endblock %}
