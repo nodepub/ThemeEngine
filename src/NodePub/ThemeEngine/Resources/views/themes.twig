@@ -56,13 +56,12 @@
                                 <div class="caption">
 
                                     <div class="np_theme_preview_thumb">
-                                        <div class="np_iframe_overlay"></div>
-                                        <iframe src="{{ path('theme_preview_url', {'theme': theme.namespace, 'url': '/'|url_encode}) }}" width="816" height="525" scrolling="no"></iframe>
+                                        <span class="label label-warning">TODO: need image</span>
                                     </div>
 
-                                    <a href="{{ path('theme_preview', {'theme': theme.namespace}) }}" class="btn" data-action="ajax_post">Preview</a>
+                                    <a href="{{ path('theme_preview', {'theme': theme.namespace}) }}" class="btn" target="_blank">Preview</a>
                                     <a href="{{ path('theme_settings', {'theme': theme.namespace}) }}" class="btn">Customize</a>
-                                    <a href="{{ path('post_theme_activate', {'theme': theme.namespace}) }}" class="btn btn-primary{% if loop.first %} disabled{% endif %}" data-action="activate_theme" data-theme-namespace={{ theme.namespace }}>Activate</a>
+                                    <a href="{{ path('post_theme_activate', {'theme': theme.namespace}) }}" class="btn btn-primary{% if loop.first %} disabled{% endif %}" data-action="ajax_post">Activate</a>
                                 </div>
                             </div>
                         </li>

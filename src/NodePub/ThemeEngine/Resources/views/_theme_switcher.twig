@@ -1,4 +1,4 @@
-{% if embed_styles is defined %}
+{% if embed_stylesX is defined %}
 <style type="text/css">
     .np_theme_switcher {
         position: absolute;
@@ -20,6 +20,12 @@
     }
 </style>
 {% endif %}
-<form action="{{ path('theme_switcher') }}" method="post" class="np_theme_switcher">
-    {{ form_widget(form) }}
-</form>
+<div class="np_theme_switcher">
+    <form action="{{ path('theme_switcher') }}" method="post">
+        <label for="form_theme"><i class="icon-eye-open icon-light"></i> <span>Theme Preview</span></label>
+        <div>
+            {{ form_widget(form.theme) }}
+            {{ form_rest(form) }}
+        </div>
+    </form>
+</div>

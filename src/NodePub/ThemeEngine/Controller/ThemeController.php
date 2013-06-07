@@ -6,7 +6,6 @@ use NodePub\ThemeEngine\ThemeManager;
 use NodePub\ThemeEngine\Theme;
 use NodePub\ThemeEngine\Config\ConfigurationProviderInterface;
 use NodePub\ThemeEngine\Form\Type\ThemeSettingsType;
-use NodePub\ThemeEngine\Form\Type\ThemeSwitcherType;
 use NodePub\ThemeEngine\Helper\AssetHelper;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
@@ -129,10 +128,10 @@ class ThemeController
 
         if ($previouslySelectedTheme = $this->app['session']->get('theme_preview')) {
             $defaultFormData['theme'] = $previouslySelectedTheme;
-            $resetAttrs = array();
+            $resetAttrs = array('class' => 'btn');
         } else {
             $defaultFormData['theme'] = $this->themeManager->getActiveTheme()->getNamespace();
-            $resetAttrs = array('disabled' => true);
+            $resetAttrs = array('disabled' => true, 'class' => 'btn');
         }
 
         $form = $this->app['form.factory']->createBuilder('form', $defaultFormData)
@@ -144,7 +143,7 @@ class ThemeController
                 'attr' => array('class' => '-themeSwitchSelect')
             ))
             ->add('reset', 'submit', array('attr' => $resetAttrs))
-            ->add('submit', 'submit')
+            ->add('submit', 'submit', array('attr' => array('class' => 'btn')))
             ->getForm();
 
         if ('POST' === $request->getMethod()) {
@@ -182,7 +181,7 @@ class ThemeController
     public function postActivateAction(Theme $theme)
     {
         // TODO: save the theme for the current site
-        
+
         return $this->app->json(array('message' => 'Theme activated.'));
     }
 
