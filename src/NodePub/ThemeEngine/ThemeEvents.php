@@ -5,7 +5,7 @@ namespace NodePub\ThemeEngine;
 final class ThemeEvents
 {
     /**
-     * The np.theme.activate event is thrown each time a theme is activated.
+     * The np.theme.activate event is triggered each time a theme is activated.
      *
      * The event listener receives an
      * NodePub\ThemeEngine\Event\ThemeActivateEvent instance.
@@ -15,7 +15,7 @@ final class ThemeEvents
     const THEME_ACTIVATE = 'np.theme.activate';
 
     /**
-     * The np.theme.manager.initialized event is thrown each time a theme manager is initialized.
+     * The np.theme.manager.initialized event is triggered each time a theme manager is initialized.
      *
      * The event listener receives an
      * NodePub\ThemeEngine\Event\ThemeManagerInitEvent instance.
