@@ -36,6 +36,7 @@ class ThemeTwigExtension extends \Twig_Extension
         return array(
             'theme_styles'      => new \Twig_Function_Method($this, 'themeStyles'),
             'theme_javascripts' => new \Twig_Function_Method($this, 'themeJavaScripts'),
+            'theme_icons'       => new \Twig_Function_Method($this, 'themeIcons'),
             'body_class'        => new \Twig_Function_Method($this, 'bodyClass'),
         );
     }
@@ -74,6 +75,14 @@ class ThemeTwigExtension extends \Twig_Extension
         }
 
         return implode(PHP_EOL, $scriptLinks);
+    }
+
+    /**
+     * Leaving this blank for now so that themes can start to include it
+     */
+    public function themeIcons()
+    {
+        return '';
     }
 
     public function bodyClass()

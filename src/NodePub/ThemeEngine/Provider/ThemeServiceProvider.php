@@ -47,6 +47,10 @@ class ThemeServiceProvider implements ServiceProviderInterface
             }
             return $mountPoint;
         });
+        
+        $app['np.theme.paths'] = $app->share(function($app) {
+            return isset($app['web_dir']) ? realpath($app['web_dir'].'/themes') : '';
+        });
 
         $app['np.theme.settings'] = $app->share(function($app) {
             return array();
