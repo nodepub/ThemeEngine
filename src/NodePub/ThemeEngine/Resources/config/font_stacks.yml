@@ -1,0 +1,16 @@
+Sans-Serif:
+  Calibri: 'Calibri, Candara, Segoe, "Segoe UI", Optima, Arial, sans-serif'
+  Helvetica: '"Helvetica Neue", Helvetica, Arial, sans-serif'
+  Franklin Gothic Medium: '"Franklin Gothic Medium", "Franklin Gothic", "ITC Franklin Gothic", Arial, sans-serif'
+  Futura: 'Futura, "Trebuchet MS", Arial, sans-serif'
+
+Serif:
+  Garamond: 'Garamond, Baskerville, "Baskerville Old Face", "Hoefler Text", "Times New Roman", serif'
+  Georgia: 'Georgia, Times, "Times New Roman", serif'
+  Cambria: 'Cambria, Georgia, serif'
+  Times New Roman: 'TimesNewRoman, "Times New Roman", Times, Baskerville, Georgia, serif'
+
+Monospace:
+  Consolas: 'Consolas, monaco, monospace'
+  Courier New: '"Courier New", Courier, "Lucida Sans Typewriter", "Lucida Typewriter", monospace'
+  Lucida Sans Typewriter: '"Lucida Sans Typewriter", "Lucida Console", Monaco, "Bitstream Vera Sans Mono", monospace'
