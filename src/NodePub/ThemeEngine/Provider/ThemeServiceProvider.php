@@ -2,11 +2,11 @@
 
 namespace NodePub\ThemeEngine\Provider;
 
+use NodePub\Common\Yaml\YamlConfigurationProvider;
 use NodePub\ThemeEngine\Provider\ThemeControllerProvider;
 use NodePub\ThemeEngine\ThemeManager;
 use NodePub\ThemeEngine\Controller\ThemeController;
 use NodePub\ThemeEngine\Twig\ThemeTwigExtension;
-use NodePub\ThemeEngine\Config\YamlConfigurationProvider;
 use NodePub\ThemeEngine\Model\Asset;
 use NodePub\ThemeEngine\Helper\AssetHelper;
 
@@ -26,8 +26,12 @@ class ThemeServiceProvider implements ServiceProviderInterface
     {
         $app['np.theme.templates.ext'] = 'twig';
         $app['np.theme.templates.custom_css'] = '_styles.css.twig';
-        $app['np.theme.active'] = 'default';
         $app['np.theme.minify_assets'] = !$app['debug'];
+        $app['np.theme.custom_settings_file'] = $app['np.config_dir'].'/theme_settings.yml';
+        
+        $app['np.theme.active'] = $app->share(function($app) {
+            return 'default';
+        });
         
         $app['np.theme.active'] = $app->share($app->extend('np.theme.active', function($activeTheme, $app) {
             // Check session for theme previews
@@ -50,7 +54,7 @@ class ThemeServiceProvider implements ServiceProviderInterface
         });
         
         $app['np.theme.paths'] = $app->share(function($app) {
-            return isset($app['web_dir']) ? realpath($app['web_dir'].'/themes') : '';
+            return isset($app['np.web_dir']) ? realpath($app['np.web_dir'].'/themes') : '';
         });
 
         $app['np.theme.settings'] = $app->share(function($app) {
@@ -67,7 +71,7 @@ class ThemeServiceProvider implements ServiceProviderInterface
 
         $app['np.theme.asset_cache_dir'] = $app->share(function($app) {
             $namespace = $app['np.theme.manager']->getActiveTheme()->getNamespace();
-            return $app['cache_dir'].'/themes/'.$namespace;
+            return $app['np.cache_dir'].'/themes/'.$namespace;
         });
 
         $app['np.theme.asset_file_cache'] = $app->share(function($app) {
@@ -93,7 +97,7 @@ class ThemeServiceProvider implements ServiceProviderInterface
                 $app['np.theme.configuration_provider'],
                 $app
             );
-        }
+        });
         
         $app['np.theme.fontstacks'] = $app->share(function($app) {
             Symfony\Component\Yaml\Yaml::parse(__DIR__.'/../Resources/config/font_stacks.yml');

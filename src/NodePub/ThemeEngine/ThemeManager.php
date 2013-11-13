@@ -11,7 +11,6 @@ use NodePub\ThemeEngine\ThemeEvents;
 use NodePub\ThemeEngine\Event\ThemeActivateEvent;
 use NodePub\ThemeEngine\Event\ThemeManagerInitEvent;
 
-
 class ThemeManager
 {
     protected $initialized,
@@ -58,7 +57,7 @@ class ThemeManager
         if (is_dir($sourcePath)) {
             $this->sourceDirs[] = $sourcePath;
         } else {
-            throw new \Exception(sprintf('Theme path "%s" is not a readable directory', $sourcePath));
+            throw new \Exception(sprintf('Theme path {%s} is not a readable directory', $sourcePath));
         }
     }
 
