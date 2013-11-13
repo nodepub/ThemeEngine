@@ -26,19 +26,20 @@ class ThemeServiceProvider implements ServiceProviderInterface
     {
         $app['np.theme.templates.ext'] = 'twig';
         $app['np.theme.templates.custom_css'] = '_styles.css.twig';
-        $app['np.theme.default'] = 'default';
+        $app['np.theme.active'] = 'default';
         $app['np.theme.minify_assets'] = !$app['debug'];
-
-        $app['np.theme.active'] = $app->share(function($app) {
-
+        
+        $app['np.theme.active'] = $app->share($app->extend('np.theme.active', function($activeTheme, $app) {
+            // Check session for theme previews
+            
             // One-off page previews
-            if ($theme = $app['session']->get('theme_temp_preview')) {
+            if ($tempTheme = $app['session']->get('theme_temp_preview')) {
                 $app['session']->remove('theme_temp_preview');
-                return $theme;
+                return $tempTheme;
             }
-
-            return $app['session']->get('theme_preview') ?: $app['np.theme.default'];
-        });
+            
+            return $app['session']->get('theme_preview') ?: $activeTheme;
+        }));
 
         $app['np.theme.mount_point'] = $app->share(function($app) {
             $mountPoint = '/themes';
@@ -92,6 +93,10 @@ class ThemeServiceProvider implements ServiceProviderInterface
                 $app['np.theme.configuration_provider'],
                 $app
             );
+        }
+        
+        $app['np.theme.fontstacks'] = $app->share(function($app) {
+            Symfony\Component\Yaml\Yaml::parse(__DIR__.'/../Resources/config/font_stacks.yml');
         });
     }
 

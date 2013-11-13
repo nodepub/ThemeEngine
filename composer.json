@@ -14,6 +14,7 @@
         "twig/twig"             : ">=1.10,<2.0-dev",
         "symfony/finder"        : "~2.3",
         "symfony/twig-bridge"   : "~2.3",
+        "symfony/yaml"          : "~2.3",
         "kriswallsmith/assetic" : ">=1.1.0-alpha4,<1.2-dev",
         "nodepub/common"        : "dev-master"
     },
