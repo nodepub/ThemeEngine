@@ -47,8 +47,8 @@ class ThemeServiceProvider implements ServiceProviderInterface
 
         $app['np.theme.mount_point'] = $app->share(function($app) {
             $mountPoint = '/themes';
-            if (isset($app['np.admin.mount_point'])) {
-                $mountPoint = $app['np.admin.mount_point'] . $mountPoint;
+            if (isset($app['np.admin.controller.prefix_factory'])) {
+                $mountPoint = $app['np.admin.controller.prefix_factory']->create($mountPoint);
             }
             return $mountPoint;
         });
@@ -116,15 +116,16 @@ class ThemeServiceProvider implements ServiceProviderInterface
                 $app['twig.loader.filesystem']->addPath($theme->getDir(), $theme->getNamespace());
             }
 
-            $app['np.theme.manager']->activateTheme($app['np.theme.active']);
+            $activeTheme = $app['np.theme.manager']->activateTheme($app['np.theme.active']);
 
             if (!empty($app['np.theme.custom_settings'])) {
                 $app['np.theme.manager']->getActiveTheme()->customize($app['np.theme.custom_settings']);
             }
 
-            $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
+            $app['twig'] = $app->share($app->extend('twig', function($twig, $app) use ($activeTheme) {
                 $twig->addGlobal('themes_path', '/themes/');
                 $twig->addGlobal('active_theme', $app['np.theme.active']);
+                $twig->addGlobal('theme_templates', $activeTheme->getTemplates());
                 $twig->addGlobal('standalone', true); // TODO: this will determine if we're in the larger NP app
                 $twig->addExtension(new ThemeTwigExtension(
                     $app['np.theme.manager'],

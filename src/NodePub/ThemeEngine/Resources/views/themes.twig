@@ -1,8 +1,8 @@
 {% extends layout %}
 
-{% block nav %}Themes{% endblock %}
+{% block panel_nav %}Themes{% endblock %}
 
-{% block content %}
+{% block panel_content %}
     {% block body %}
         {% if standalone %}
             {% for flashMessage in app.session.flashbag.get('notice') %}
@@ -37,8 +37,8 @@
         
         {% for theme in themes %}
             <div class="row np_theme_info">
-                <div class="span5">
-                    <h2>{{ theme.name }}{% if loop.first %} (active){% endif %}</h2>
+                <div class="col-md-5">
+                    <h2>{{ theme.name }}{% if loop.first %} <small>(active)</small>{% endif %}</h2>
                     <p>{{ theme.description }}</p>
                     <h3>Templates:</h3>
                     <ul>
@@ -49,23 +49,11 @@
                     {% endfor %}
                     </ul>
                 </div>
-                <div class="span5">
-                    <ul class="thumbnails">
-                        <li class="span4">
-                            <div class="thumbnail">
-                                <div class="caption">
-
-                                    <div class="np_theme_preview_thumb">
-                                        <span class="label label-warning">TODO: need image</span>
-                                    </div>
-
-                                    <a href="{{ path('theme_preview', {'theme': theme.namespace}) }}" class="btn" target="_blank">Preview</a>
-                                    <a href="{{ path('theme_settings', {'theme': theme.namespace}) }}" class="btn">Customize</a>
-                                    <a href="{{ path('post_theme_activate', {'theme': theme.namespace}) }}" class="btn btn-primary{% if loop.first %} disabled{% endif %}" data-action="ajax_post">Activate</a>
-                                </div>
-                            </div>
-                        </li>
-                    </ul>
+                <div class="col-md-5">
+                    <img src="http://placehold.it/300x200" class="img-responsive np_theme_preview_thumb">
+                    <a href="{{ path('theme_preview', {'theme': theme.namespace}) }}" class="btn btn-default" target="_blank">Preview</a>
+                    <a href="{{ path('theme_settings', {'theme': theme.namespace}) }}" class="btn btn-default">Customize</a>
+                    <a href="{{ path('post_theme_activate', {'theme': theme.namespace}) }}" class="btn btn-primary{% if loop.first %} disabled{% endif %}" data-action="ajax_post">Activate</a>
                 </div>
             </div>
         {% endfor %}

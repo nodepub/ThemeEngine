@@ -2,15 +2,16 @@
 
 namespace NodePub\ThemeEngine\Controller;
 
-use NodePub\ThemeEngine\ThemeManager;
-use NodePub\ThemeEngine\Theme;
-use NodePub\ThemeEngine\Config\ConfigurationProviderInterface;
-use NodePub\ThemeEngine\Form\Type\ThemeSettingsType;
-use NodePub\ThemeEngine\Helper\AssetHelper;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\Flash\FlashBag;
+
+use NodePub\Common\Config\ConfigurationProviderInterface;
+use NodePub\ThemeEngine\ThemeManager;
+use NodePub\ThemeEngine\Theme;
+use NodePub\ThemeEngine\Form\Type\ThemeSettingsType;
+use NodePub\ThemeEngine\Helper\AssetHelper;
 
 class ThemeController
 {

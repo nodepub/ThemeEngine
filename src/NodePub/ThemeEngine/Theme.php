@@ -2,8 +2,10 @@
 
 namespace NodePub\ThemeEngine;
 
+use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\HttpFoundation\ParameterBag;
 use NodePub\ThemeEngine\Model\Asset;
+use NodePub\ThemeEngine\Config\PageTypesConfiguration;
 
 class Theme
 {
@@ -138,6 +140,49 @@ class Theme
         }
 
         return $customSettings;
+    }
+    
+    # ===================================================== #
+    #    TEMPLATES                                          #
+    # ===================================================== #
+    
+    /**
+     * Returns associative array of template names for different page types
+     */
+    public function getTemplates()
+    {
+        $processor = new Processor();
+        $pageTypesConfig = new PageTypesConfiguration();
+        
+        $templates = $processor->processConfiguration(
+            $pageTypesConfig,
+            array($this->config->get('templates', array()))
+        );
+        
+        return $this->expandTemplateNames($templates);
+    }
+    
+    /**
+     * Adds the namespace and twig extension to each template name
+     */
+    protected function expandTemplateNames($templates)
+    {
+        $expandedTemplates = array();
+        
+        foreach ($templates as $key => $value) {
+            if (is_array($value)) {
+                $expandedTemplates[$key] = $this->expandTemplateNames($value);
+            } else {
+                // check if the template is already fully namespaced
+                if (0 === strpos($value, '@')) {
+                    $expandedTemplates[$key] = $value;
+                } else {
+                    $expandedTemplates[$key] = sprintf('@%s/%s.twig', $this->getNamespace(), $value);
+                }
+            }
+        }
+        
+        return $expandedTemplates;
     }
 
     # ===================================================== #

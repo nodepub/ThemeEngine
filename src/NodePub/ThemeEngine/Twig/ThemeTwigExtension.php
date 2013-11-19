@@ -38,6 +38,7 @@ class ThemeTwigExtension extends \Twig_Extension
             'theme_javascripts' => new \Twig_Function_Method($this, 'themeJavaScripts'),
             'theme_icons'       => new \Twig_Function_Method($this, 'themeIcons'),
             'body_class'        => new \Twig_Function_Method($this, 'bodyClass'),
+            'font_icon'         => new \Twig_Function_Method($this, 'fontIcon'),
         );
     }
 
@@ -101,9 +102,24 @@ class ThemeTwigExtension extends \Twig_Extension
         return implode(' ', $classes);
     }
 
+    /**
+     * TODO: use slugify lib
+     */
     public function slugify($string)
     {
         return str_replace(' ', '-', strtolower($string));
+    }
+    
+    
+    /**
+     * Renders the markup for a Font Awesome icon
+     */
+    public function fontIcon($name, $class = '')
+    {
+        if (!empty($class)) {
+            $class = ' ' . $class;
+        }
+        return sprintf('<i class="fa fa-%s%s"></i>', $name, $class);
     }
 
     protected function getCustomizedCss()

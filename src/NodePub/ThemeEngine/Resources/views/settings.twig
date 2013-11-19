@@ -1,8 +1,8 @@
 {% extends layout %}
 
-{% block nav %}<a href="{{ path('admin_themes') }}">Themes</a> <i class="icon-chevron-right"></i> {{ active_theme.name }}{% endblock %}
+{% block panel_nav %}<a href="{{ path('admin_themes') }}">Themes</a> <i class="icon-chevron-right"></i> {{ active_theme.name }}{% endblock %}
 
-{% block content %}
+{% block panel_content %}
     {% block body %}
         {% if standalone %}<h1>{{ active_theme.name }}</h1>{% endif %}
         <form action="{{ path('post_theme_settings', {'theme': active_theme.namespace}) }}" method="post">
