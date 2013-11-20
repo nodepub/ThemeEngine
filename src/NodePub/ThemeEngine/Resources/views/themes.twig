@@ -50,10 +50,19 @@
                     </ul>
                 </div>
                 <div class="col-md-5">
-                    <img src="http://placehold.it/300x200" class="img-responsive np_theme_preview_thumb">
-                    <a href="{{ path('theme_preview', {'theme': theme.namespace}) }}" class="btn btn-default" target="_blank">Preview</a>
-                    <a href="{{ path('theme_settings', {'theme': theme.namespace}) }}" class="btn btn-default">Customize</a>
-                    <a href="{{ path('post_theme_activate', {'theme': theme.namespace}) }}" class="btn btn-primary{% if loop.first %} disabled{% endif %}" data-action="ajax_post">Activate</a>
+                    <img src="/themes/{{theme.namespace}}/preview.gif" class="img-responsive np_theme_preview_thumb">
+                    <div class="btn-group">
+                        <a href="{{ path('theme_preview', {'theme': theme.namespace}) }}" class="btn btn-default" target="_blank">Preview</a>
+                        <a href="{{ path('theme_settings', {'theme': theme.namespace}) }}" class="btn btn-default">Customize</a>
+                        {% if loop.first %}
+                            {% set btn_text = '<i class="fa fa-check-circle"></i> Active' %}
+                            {% set btn_class = ' disabled' %}
+                        {% else %}
+                            {% set btn_text = '<i class="fa fa-check-circle-o"></i> Activate' %}
+                            {% set btn_class = '' %}
+                        {% endif %}
+                        <a href="{{ path('post_theme_activate', {'theme': theme.namespace}) }}" class="btn btn-primary{{ btn_class }}" data-action="ajax_post">{{ btn_text }}</a>
+                    </div>
                 </div>
             </div>
         {% endfor %}
