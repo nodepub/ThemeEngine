@@ -72,10 +72,10 @@ class ThemeManager
     /**
      * Sets the theme name of the current active theme
      */
-    public function activateTheme($theme)
+    public function activateTheme($themeName)
     {
-        if (is_string($theme)) {
-            $theme = $this->getTheme($theme);
+        if (is_string($themeName)) {
+            $theme = $this->getTheme($themeName);
         }
 
         if ($theme) {
@@ -112,7 +112,7 @@ class ThemeManager
     public function findThemeDirectories()
     {
         $themeDirs = Finder::create()
-            ->directories()
+            ->followLinks()
             ->depth('== 0');
             ;
         
@@ -168,6 +168,7 @@ class ThemeManager
     {
         $configFiles = Finder::create()
             ->files()
+            ->followLinks()
             ->name('config.yml')
             ;
         
