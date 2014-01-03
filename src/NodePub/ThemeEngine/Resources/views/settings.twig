@@ -7,7 +7,7 @@
         {% if standalone %}<h1>{{ active_theme.name }}</h1>{% endif %}
         <form action="{{ path('post_theme_settings', {'theme': active_theme.namespace}) }}" method="post">
             {{ form_widget(form) }}
-            <a href="{{ path('admin_themes') }}" class="btn">Cancel</a>
+            <a href="{{ path('admin_themes') }}" class="btn btn-default">Cancel</a>
             <input type="submit" name="Save" class="btn btn-primary" />
         </form>
     {% endblock %}

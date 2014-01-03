@@ -37,7 +37,7 @@
         
         {% for theme in themes %}
             <div class="row np_theme_info">
-                <div class="col-md-5">
+                <div class="col-md-6">
                     <h2>{{ theme.name }}{% if loop.first %} <small>(active)</small>{% endif %}</h2>
                     <p>{{ theme.description }}</p>
                     <h3>Templates:</h3>
@@ -49,7 +49,7 @@
                     {% endfor %}
                     </ul>
                 </div>
-                <div class="col-md-5">
+                <div class="col-md-6">
                     <img src="/themes/{{theme.namespace}}/preview.gif" class="img-responsive np_theme_preview_thumb">
                     <div class="btn-group">
                         <a href="{{ path('theme_preview', {'theme': theme.namespace}) }}" class="btn btn-default" target="_blank">Preview</a>
