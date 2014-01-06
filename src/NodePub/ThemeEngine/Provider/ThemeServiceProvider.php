@@ -33,6 +33,7 @@ class ThemeServiceProvider implements ServiceProviderInterface
             return 'default';
         });
         
+        // name of the active theme
         $app['np.theme.active'] = $app->share($app->extend('np.theme.active', function($activeTheme, $app) {
             // Check session for theme previews
             
