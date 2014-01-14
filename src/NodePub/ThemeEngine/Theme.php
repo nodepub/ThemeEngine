@@ -28,10 +28,7 @@ class Theme
     {
         $this->config = new ParameterBag($config);
         $this->assets = new ParameterBag();
-
-        // Cache the default settings so that if the theme is customized,
-        // we still have the original values
-        $this->config->set('defaultSettings', array_merge(array(), $this->config->get('settings')));
+        $this->initializeDefaultSettings();
     }
 
     public function getName()
@@ -89,6 +86,22 @@ class Theme
     # ===================================================== #
     #    SETTINGS                                           #
     # ===================================================== #
+    
+    /**
+     * Caches the default settings so that if the theme is customized,
+     * we still have the original values.
+     */
+    protected function initializeDefaultSettings()
+    {
+        $defaultSettings = array();
+        $configuredSettings = $this->config->get('settings');
+        
+        if (is_array($configuredSettings)) {
+            $defaultSettings = array_merge($defaultSettings, $this->config->get('settings'));
+        }
+        
+        $this->config->set('defaultSettings', $defaultSettings);
+    }
 
     /**
      * @return array
