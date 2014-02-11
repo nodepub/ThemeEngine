@@ -9,7 +9,7 @@
         {"name": "Andrew Gruner", "email": "andrew.gruner@gmail.com"}
     ],
     "require": {
-        "php": ">=5.3.3",
+        "php": ">=5.4",
         "doctrine/common"       : ">= 2.3.0, < 2.4.0-beta",
         "twig/twig"             : ">=1.10,<2.0-dev",
         "symfony/finder"        : "~2.3",
