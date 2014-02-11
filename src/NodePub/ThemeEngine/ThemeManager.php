@@ -2,21 +2,24 @@
 
 namespace NodePub\ThemeEngine;
 
-use Symfony\Component\Finder\Finder;
-use Symfony\Component\Yaml\Yaml;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Doctrine\Common\Collections\ArrayCollection;
-use NodePub\ThemeEngine\Theme;
-use NodePub\ThemeEngine\ThemeEvents;
+use NodePub\Common\Trait\SourceDirectoryAwareInterface;
+use NodePub\Common\Trait\SourceDirectoryAwareTrait;
 use NodePub\ThemeEngine\Event\ThemeActivateEvent;
 use NodePub\ThemeEngine\Event\ThemeManagerInitEvent;
+use NodePub\ThemeEngine\Theme;
+use NodePub\ThemeEngine\ThemeEvents;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\Finder\Finder;
+use Symfony\Component\Yaml\Yaml;
 
-class ThemeManager
+class ThemeManager implements SourceDirectoryAwareInterface
 {
+    use SourceDirectoryAwareTrait;
+    
     protected $initialized,
               $activeTheme,
               $activeThemes,
-              $sourceDirs,
               $templateFileExtension,
               $eventDispatcher;
 
@@ -29,7 +32,6 @@ class ThemeManager
     public function __construct($themePaths, EventDispatcherInterface $dispatcher)
     {
         $this->initialized = false;
-        $this->sourceDirs = array();
         $this->activeThemes = new ArrayCollection();
         $this->templateFileExtension = 'twig';
         $this->eventDispatcher = $dispatcher;
@@ -40,24 +42,6 @@ class ThemeManager
             }
         } elseif (is_string($themePaths)) {
             $this->addSource($themePaths);
-        }
-    }
-
-    /**
-     * Adds a directory to the array of sources that will
-     * be searched for themes to load.
-     */
-    public function addSource($sourcePath)
-    {
-        if (is_link($sourcePath)) {
-            $this->addSource(realpath($sourcePath));
-            return;
-        }
-        
-        if (is_dir($sourcePath)) {
-            $this->sourceDirs[] = $sourcePath;
-        } else {
-            throw new \Exception(sprintf('Theme path {%s} is not a readable directory', $sourcePath));
         }
     }
 
@@ -111,16 +95,12 @@ class ThemeManager
      */
     public function findThemeDirectories()
     {
-        $themeDirs = Finder::create()
+        $finder = Finder::create()
             ->followLinks()
             ->depth('== 0');
             ;
         
-        foreach ($this->sourceDirs as $dir) {
-           $themeDirs->in($dir);
-        }
-
-        return $themeDirs;
+        return $this->findInSourceDirs($finder);
     }
 
     /**
@@ -166,17 +146,13 @@ class ThemeManager
      */
     protected function findConfigFiles()
     {
-        $configFiles = Finder::create()
+        $finder = Finder::create()
             ->files()
             ->followLinks()
             ->name('config.yml')
             ;
         
-        foreach ($this->sourceDirs as $dir) {
-            $configFiles->in($dir);
-        }
-
-        return $configFiles;
+        return $this->findInSourceDirs($finder);
     }
     
     /**
