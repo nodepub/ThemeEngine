@@ -3,8 +3,8 @@
 namespace NodePub\ThemeEngine;
 
 use Doctrine\Common\Collections\ArrayCollection;
-use NodePub\Common\Trait\SourceDirectoryAwareInterface;
-use NodePub\Common\Trait\SourceDirectoryAwareTrait;
+use NodePub\Common\SourceDirectoryAwareInterface;
+use NodePub\Common\SourceDirectoryAwareTrait;
 use NodePub\ThemeEngine\Event\ThemeActivateEvent;
 use NodePub\ThemeEngine\Event\ThemeManagerInitEvent;
 use NodePub\ThemeEngine\Theme;
